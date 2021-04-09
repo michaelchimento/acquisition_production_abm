@@ -344,7 +344,7 @@ def simulation(params_list):
         master_sim_num.value += 1
 
     #create csv file with headers
-    file_path = "../data/output_turnover_{}_gtype_{}_sim_{}.csv".format(turnover,graph_type, sim_num)
+    file_path = "../raw_data/output_turnover_{}_gtype_{}_sim_{}.csv".format(turnover,graph_type, sim_num)
 
     #if not isfile(file_path):
     create_csv(file_path)
@@ -405,11 +405,11 @@ def simulation(params_list):
 if __name__=="__main__":
 
     #simulation parameters
-    replicates=10
-    t_steps = 200 #timesteps to run simulation
+    replicates=100
+    t_steps = 100 #timesteps to run simulation
 
     ### Population parameters ###
-    N = 25 #population size
+    N = 20 #population size
     initial_knowledgable_prop = 1 #initial proportion of knowledgable individuals in the population
     graph_type = "random" #sets network structure
     turnover_values = [False] #toggle turnover events
@@ -430,7 +430,7 @@ if __name__=="__main__":
     g_i_values = np.around(np.arange(0.1, 1.1, 0.2), 1) #recent payoff bias EWA values
     conformity_values = [1,2] #conformity exponent EWA values
     inverse_temp_values = [0.5,1,2] #sensitivity to differences in payoffs
-    social_memory_window_values = [10] #how far back the agent can remember (in time steps) the behaviors that other agents produce
+    social_memory_window_values = [1,25,50] #how far back the agent can remember (in time steps) the behaviors that other agents produce
 
     #loop through lists of parameter values
     for turnover in turnover_values:
@@ -456,7 +456,7 @@ if __name__=="__main__":
                         pool.map(simulation,params_list)
 
     #where raw data will be put
-    directory_path="../data"
+    directory_path="../raw_data"
 
     #where concatenated dataframes will be put after all sims finish running
     new_directory_path="../concat_data"

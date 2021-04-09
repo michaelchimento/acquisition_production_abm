@@ -1,0 +1,30 @@
+---
+title: "Modeling production and transmission"
+author: "Michael Chimento"
+date: "4/9/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction
+
+This companion document is mean to directly show how the agent based model is implemented and operates under the hood.
+
+Let's load the required libraries. The networks of agents are handled by [networkx](https://networkx.org/), a very powerful library that has many options for graph creation.
+
+```{python}
+from collections import Counter
+import math
+import sys
+import networkx as nx
+import random
+import numpy as np
+from os.path import isfile,join
+from multiprocessing import Pool,Lock,Value,Manager
+import pandas as pd
+from os import listdir,cpu_count
+```
+
