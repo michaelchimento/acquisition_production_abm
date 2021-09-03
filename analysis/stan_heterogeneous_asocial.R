@@ -4,7 +4,6 @@ library(ggridges)
 options(mc.cores = parallel::detectCores())
 
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
-directory = "../concat_data/EWA_inference/"
 
 load("../concat_data/EWA_inference_asocial_agents.Rda")
 
@@ -97,25 +96,4 @@ df9 = new
 
 df_asocial_inference = bind_rows(df1,df2,df3,df4,df5,df6,df7,df8,df9)
 df_asocial_inference$sim = as.factor(df_asocial_inference$sim)
-save(df_asocial_inference,file="../../concat_data/EWA_inference/df_asocial_inference.Rda")
-
-summary(df_asocial_inference)
-
-ggplot(data=df_asocial_inference, aes(y=as.factor(true_phi),x=post_phi, fill=sim))+
-  geom_density_ridges(alpha=0.3)+
-  theme_classic()
-
-ggplot(data=df_asocial_inference, aes(y=as.factor(true_gamma),x=post_gamma, fill=sim))+
-  geom_density_ridges(alpha=0.3)+
-  theme_classic()
-
-ggplot(data=df_asocial_inference, aes(y=as.factor(true_f),x=post_f, fill=sim))+
-  geom_density_ridges(alpha=0.3)+
-  theme_classic()
-
-ggplot(data=df_asocial_inference, aes(y=as.factor(true_tau),x=post_tau, fill=sim))+
-  geom_density_ridges(alpha=0.3)+
-  theme_classic()
-
-
-summary(ds$bout)
+save(df_asocial_inference,file="../concat_data/df_asocial_inference.Rda")
