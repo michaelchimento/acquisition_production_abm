@@ -2,9 +2,10 @@
 data/*.csv
 concat_data/*.csv
 concat_data/*.Rda
-analysis/.Rhistory
+*.Rhistory
 *.png
 *.pdf
+NOT_UPLOADED/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
