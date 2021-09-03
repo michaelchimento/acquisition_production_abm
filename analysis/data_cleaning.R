@@ -25,6 +25,8 @@ levels(df_ABM_equiv_payoff$EWA_recent_payoff_weight) = c("weak","medium","strong
 df_ABM_equiv_payoff$graph_type <- factor(df_ABM_equiv_payoff$graph_type, levels=c('random_regular','random_small_world', 'random_erdos', 'random_barabasi'))
 levels(df_ABM_equiv_payoff$graph_type) = c('random regular', 'small world', 'Erdos-Renyi',"Barabasi-Albert")
 
+df_ABM_equiv_payoff = df_ABM_equiv_payoff %>% select(!c(behavior_a_A_mat,behavior_a_I_mat,behavior_a_S_mat,behavior_a_P_mat, behavior_b_A_mat,behavior_b_I_mat,behavior_b_P_mat,behavior_b_S_mat))
+
 save(df_ABM_equiv_payoff,file="../concat_data/df_ABM_equiv.Rda")
 remove(df_ABM_equiv_payoff)
 
@@ -50,6 +52,8 @@ levels(df_ABM_equiv_payoff$EWA_tau) = c("non-conservative","conservative")
 levels(df_ABM_equiv_payoff$EWA_recent_payoff_weight) = c("medium")
 df_ABM_equiv_payoff$graph_type <- factor(df_ABM_equiv_payoff$graph_type, levels=c('random_regular','random_small_world', 'random_erdos', 'random_barabasi'))
 levels(df_ABM_equiv_payoff$graph_type) = c('random regular', 'small world', 'Erdos-Renyi',"Barabasi-Albert")
+
+df_ABM_equiv_payoff = df_ABM_equiv_payoff %>% select(!c(behavior_a_A_mat,behavior_a_I_mat,behavior_a_S_mat,behavior_a_P_mat, behavior_b_A_mat,behavior_b_I_mat,behavior_b_P_mat,behavior_b_S_mat))
 
 df_memory = df_ABM_equiv_payoff
 
@@ -79,6 +83,7 @@ levels(df_ABM_equiv_payoff$EWA_recent_payoff_weight) = c("weak","medium","strong
 df_ABM_equiv_payoff$graph_type <- factor(df_ABM_equiv_payoff$graph_type, levels=c('random_small_world'))
 levels(df_ABM_equiv_payoff$graph_type) = c('small world')
 
+df_ABM_equiv_payoff = df_ABM_equiv_payoff %>% select(!c(behavior_a_A_mat,behavior_a_I_mat,behavior_a_S_mat,behavior_a_P_mat, behavior_b_A_mat,behavior_b_I_mat,behavior_b_P_mat,behavior_b_S_mat))
 
 save(df_ABM_equiv_payoff,file="../concat_data/df_ABM_equiv_fullweights.Rda")
 remove(df_ABM_equiv_payoff)
