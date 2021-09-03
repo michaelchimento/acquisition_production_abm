@@ -41,7 +41,7 @@ for (i in unique(df_EWA$grouping)){
 
   #fit model in stan
   fit <- stan( file = 'stan_code/stan_model_noRE.stan', data = ds ,
-                     iter = 2500, warmup=1000, chains=5, cores=6, pars=parlist,
+                     iter = 2500, warmup=1000, chains=5, cores=5, pars=parlist,
                      control=list( adapt_delta=0.9 ))
 
   post <- extract(fit)
@@ -73,7 +73,7 @@ for (i in unique(df_EWA$grouping)){
 
 data$sim = as.factor(data$sim)
 df_vanilla = data
-save(df_vanilla,file="../../concat_data/EWA_inference/df_vanilla_inference.Rda")
+save(df_vanilla,file="../concat_data/df_homogeneous_inference.Rda")
 
 
 
