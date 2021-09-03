@@ -74,6 +74,6 @@ for (i in unique(df_EWA$grouping)){
 data$sim = as.factor(data$sim)
 df_diffusion = data
 
-save(df_diffusion,file="../../concat_data/EWA_inference/df_diffusion_inference_2.Rda")
+save(df_diffusion,file="../concat_data/df_social_inference.Rda")
 
 
