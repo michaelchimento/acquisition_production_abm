@@ -154,10 +154,10 @@ class agent:
                     #print("Agent {} learned behavior {}".format(self.id, behavior.name))
                     self.knowledge[behavior.name] = {"a_mat": 0,"i_mat": 0,"s_mat":0,"p_mat":0}
                     #we can conservatively assume that the behavior has been seen at least once
-        self.I_mat_update()
-        self.S_mat_update()
-        self.P_mat_update()
-        self.naive=False
+                    self.I_mat_update()
+                    self.S_mat_update()
+                    self.P_mat_update()
+                    self.naive=False
 
 
 def generate_network(graph_type,params_list):

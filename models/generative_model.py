@@ -150,10 +150,10 @@ class agent:
                 #assert 0 <= acquisition_prob <=1, "resulting acquision prob from NBDA must be between 0 and 1"
                 if random.random() < acquisition_prob:
                     self.knowledge[behavior.name] = {"a_mat": 0,"i_mat": 0,"s_mat":0,"p_mat":0}
-        self.I_mat_update()
-        self.S_mat_update()
-        self.P_mat_update()
-        self.naive=False
+                    self.I_mat_update()
+                    self.S_mat_update()
+                    self.P_mat_update()
+                    self.naive=False
 
 def generate_network(graph_type,params_list):
     if graph_type == "complete":
@@ -168,6 +168,8 @@ def generate_network(graph_type,params_list):
         G = nx.barabasi_albert_graph(N, 4, seed=None)
     elif graph_type == "random_small_world":
         G = nx.connected_watts_strogatz_graph(N, int(N/2), 0, tries=200, seed=None)
+    elif graph_type == "custom_adj_list":
+        G = nx.read_adjlist(custom_adj_list_filename)
     else:
         print("Incorrect graph name!")
 
