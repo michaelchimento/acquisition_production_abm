@@ -77,45 +77,48 @@ class agent:
             self.knowledge[known_behavior]["a_mat"] = new_A_kt
 
     def I_mat_update(self):
-        #print("Agent{} I_mat_update(). old I_mat: {}".format(self.id, self.I_mat))
-        A_mat = np.array([behavior["a_mat"] for behavior in self.knowledge.values()])
-        tau_by_A_mat = np.multiply(A_mat, self.tau)
-        summed_A_mat = logsumexp(tau_by_A_mat)
-        #assert np.sum(new_I_mat)<=1, print(new_I_mat, np.sum(new_I_mat))
-        for count, behavior in enumerate(self.knowledge.values()):
-            behavior["i_mat"] = tau_by_A_mat[count] - summed_A_mat
+        if not self.naive:
+            #print("Agent{} I_mat_update(). old I_mat: {}".format(self.id, self.I_mat))
+            A_mat = np.array([behavior["a_mat"] for behavior in self.knowledge.values()])
+            tau_by_A_mat = np.multiply(A_mat, self.tau)
+            summed_A_mat = logsumexp(tau_by_A_mat)
+            #assert np.sum(new_I_mat)<=1, print(new_I_mat, np.sum(new_I_mat))
+            for count, behavior in enumerate(self.knowledge.values()):
+                behavior["i_mat"] = tau_by_A_mat[count] - summed_A_mat
 
 
     def S_mat_update(self):
-        social_memory = [item for subl in self.long_social_memory for item in subl]
-        assert len(social_memory) <= (N * memory_window), print("memory {} exceeds memory window {}".format(len(social_memory),N*memory_window))
-        if len(social_memory)>0:
-            denom=0
-            for behavior in self.knowledge.keys():
-                denom += social_memory.count(behavior)**self.f_SI
-            for behavior in self.knowledge.keys():
-                new_S_kt = (social_memory.count(behavior)**self.f_SI) / denom
-                #assert new_S_kt<=1, print("S matrix value exceeds 1", new_S_kt)
-                self.knowledge[behavior]["s_mat"] = new_S_kt
+        if not self.naive:
+            social_memory = [item for subl in self.long_social_memory for item in subl]
+            assert len(social_memory) <= (N * memory_window), print("memory {} exceeds memory window {}".format(len(social_memory),N*memory_window))
+            if len(social_memory)>0:
+                denom=0
+                for behavior in self.knowledge.keys():
+                    denom += social_memory.count(behavior)**self.f_SI
+                for behavior in self.knowledge.keys():
+                    new_S_kt = (social_memory.count(behavior)**self.f_SI) / denom
+                    #assert new_S_kt<=1, print("S matrix value exceeds 1", new_S_kt)
+                    self.knowledge[behavior]["s_mat"] = new_S_kt
 
-        #if no social memory present
-        else:
-            for count,behavior in enumerate(self.knowledge.values()):
-                new_S_kt = 0
-                behavior["s_mat"] = new_S_kt
+            #if no social memory present
+            else:
+                for count,behavior in enumerate(self.knowledge.values()):
+                    new_S_kt = 0
+                    behavior["s_mat"] = new_S_kt
 
 
     def P_mat_update(self):
-        #print("Agent{} P_mat_update(). Old P_mat{}".format(self.id, self.P_mat))
-        social_memory = np.array([x["s_mat"] for x in self.knowledge.values()])
-        #print("social memory {}".format(social_memory))
-        if np.sum(social_memory)>0:
-            for behavior in self.knowledge.values():
-                behavior["p_mat"] = (1 - self.sigma)*np.exp(behavior["i_mat"]) + self.sigma*behavior["s_mat"]
+        if not self.naive:
+            #print("Agent{} P_mat_update(). Old P_mat{}".format(self.id, self.P_mat))
+            social_memory = np.array([x["s_mat"] for x in self.knowledge.values()])
+            #print("social memory {}".format(social_memory))
+            if np.sum(social_memory)>0:
+                for behavior in self.knowledge.values():
+                    behavior["p_mat"] = (1 - self.sigma)*np.exp(behavior["i_mat"]) + self.sigma*behavior["s_mat"]
 
-        else:
-            for behavior in self.knowledge.values():
-                behavior["p_mat"] = np.exp(behavior["i_mat"])
+            else:
+                for behavior in self.knowledge.values():
+                    behavior["p_mat"] = np.exp(behavior["i_mat"])
 
 
     def produceBehavior(self):
@@ -143,7 +146,6 @@ class agent:
 
     def acquire_behavior(self, G):
         neighbors = [node for node in G.neighbors(self.id)]
-
         for behavior.name in all_behaviors:
             if behavior.name not in self.knowledge.keys():
                 acquisition_prob = lambda_t(behavior.name,neighbors,G)
