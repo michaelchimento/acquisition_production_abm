@@ -18,7 +18,7 @@ df = rbind(df_vanilla,df_diffusion,df_asocial_inference)
 
 t1 = df %>% group_by(type,true_phi) %>% summarize(variable="phi",mean=round(mean(post_phi),2), HPDI_89 = paste0("[",round(HPDI(post_phi)[1],2),",",high = round(HPDI(post_phi)[2],2),"]"))%>% rename(value = true_phi)
 
-t2 = df %>% group_by(type,true_gamma) %>% summarize(variable="gamma",mean=round(mean(post_gamma),2), HPDI_89 = paste0("[",round(HPDI(post_gamma)[1],2),",",high = round(HPDI(post_gamma)[2],2),"]")) %>% rename(value = true_gamma)
+t2 = df %>% group_by(type,true_sigma) %>% summarize(variable="sigma",mean=round(mean(post_sigma),2), HPDI_89 = paste0("[",round(HPDI(post_sigma)[1],2),",",high = round(HPDI(post_sigma)[2],2),"]")) %>% rename(value = true_sigma)
 
 t3 = df %>% group_by(type,true_f) %>% summarize(variable="f_SI",mean=round(mean(post_f),2), HPDI_89 = paste0("[",round(HPDI(post_f)[1],2),",",high = round(HPDI(post_f)[2],2),"]")) %>% rename(value = true_f)
 
