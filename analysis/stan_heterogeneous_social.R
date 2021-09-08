@@ -38,32 +38,34 @@ for (i in unique(df_EWA$grouping)){
     bout = df$timestep ,
     N_effects=4
   )
-  parlist <- c("mu", "log_lik" ,"PrPreds","phi" , "gamma", "fc", "lambda")
+  parlist <- c("mu", "log_lik" ,"PrPreds","phi" , "sigma", "fc", "tau")
 
   #fit model in stan
   fit <- stan( file = 'stan_code/stan_model_noRE.stan', data = ds ,
                      iter = 2500, warmup=1000, chains=5, cores=10, pars=parlist,
                      control=list( adapt_delta=0.9 ))
 
+  assign(paste0(diagnostics,i),dashboard(fit))
   post <- extract(fit)
+  remove(fit)
 
   #extract posterior densities
   post_phi = logistic(post$mu[,1])
-  post_gamma = logistic(post$mu[,2])
+  post_sigma = logistic(post$mu[,2])
   post_f = exp(post$mu[,3])
   post_tau = exp(post$mu[,4])
 
-  new = data.frame(post_phi,post_gamma,post_f,post_tau)
+  new = data.frame(post_phi,post_sigma,post_f,post_tau)
 
   new = new %>% mutate(
     true_phi=df$EWA_recent_payoff_weight[1],
-    true_gamma=df$EWA_soc_info_weight[1],
+    true_sigma=df$EWA_soc_info_weight[1],
     true_f=df$EWA_conformity[1],
     true_tau=df$EWA_inverse_temp[1],
     #est_phi=precis(fit, depth=2, pars='phi')[1,1],
-    #est_gamma=precis(fit, depth=2, pars='gamma')[1,1],
+    #est_sigma=precis(fit, depth=2, pars='sigma')[1,1],
     #est_f=precis(fit, depth=2, pars='fc')[1,1],
-    #est_tau=precis(fit, depth=2, pars='lambda')[1,1],
+    #est_tau=precis(fit, depth=2, pars='tau')[1,1],
     sim=i
   )
 

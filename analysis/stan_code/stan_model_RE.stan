@@ -33,10 +33,10 @@ model {
     real fc;            // conformity exponent
 
    //priors
-    mu[1] ~ normal(1,0.6);
-    mu[2] ~ normal(0,1);
-    mu[3] ~ normal(0,1);
-    mu[4] ~ normal(0,0.5);
+    mu[1] ~ normal(0,1); //phi
+    mu[2] ~ normal(0,1); //gamma
+    mu[3] ~ normal(0,1); //fc
+    mu[4] ~ normal(0,1); //lambda
     sigma_i ~ exponential(1);
     to_vector(zed_i) ~ normal(0,1);
     L_Rho_i ~ lkj_corr_cholesky(3);
@@ -53,8 +53,6 @@ model {
         }//j
 
         if ( bout[i]==1 ) {
-            //IMPORTANT: uncomment this line to account for starting knowledge state of individuals in diffusion sims
-            //AC[1] <- 1
             // calculate new individual's parameter values
             phi= inv_logit(  mu[1] + I[id[i],1] );
             gamma = inv_logit(mu[2] + I[id[i],2]  );

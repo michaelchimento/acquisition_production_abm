@@ -21,15 +21,16 @@ model {
     real PrS;           // social learning Pr
     vector[K] s_temp;   // social learning temp
     real phi;           // sensitivity to recent experience
-    real lambda;        // sensitivity to attraction scores
-    real gamma;         // social weight vs personal
+    real sigma;         // social weight vs personal
     real fc;            // conformity exponent
+    real tau;        // sensitivity to attraction scores
+
 
    //priors
-    mu[1] ~ normal(0,3);
-    mu[2] ~ normal(0,3);
-    mu[3] ~ normal(0,0.5);
-    mu[4] ~ normal(0,0.5);
+    mu[1] ~ normal(0,3); //phi
+    mu[2] ~ normal(0,3); //sigma
+    mu[3] ~ normal(0,0.5); //fc
+    mu[4] ~ normal(0,0.5); //tau
 
     //liklihood loop
     for ( i in 1:N ) {
@@ -43,16 +44,14 @@ model {
         }//j
 
         if ( bout[i]==1 ) {
-            //IMPORTANT: uncomment this line to account for starting knowledge state of individuals in diffusion sims
-            //AC[1] <- 1
             // calculate new individual's parameter values
             phi= inv_logit(mu[1]);
-            gamma = inv_logit(mu[2]);
+            sigma = inv_logit(mu[2]);
             fc = exp(mu[3]);
-            lambda = exp(mu[4]);
+            tau = exp(mu[4]);
         }
 
-        logPrA = lambda*AC[tech[i]] - log_sum_exp( lambda*AC );
+        logPrA = tau*AC[tech[i]] - log_sum_exp( tau*AC );
 
         //conformity aspect below
         if ( bout[i] > 1 ) {
@@ -60,7 +59,7 @@ model {
                 // compute frequency cue
                 for ( j in 1:K ) s_temp[j] = pow(s[i,j],fc);
                 PrS = s_temp[tech[i]]/sum(s_temp);
-                target += log( (1-gamma)*exp(logPrA) + gamma*PrS ) ;
+                target += log( (1-sigma)*exp(logPrA) + sigma*PrS ) ;
             } else {
                 target += logPrA;
             }
@@ -77,10 +76,10 @@ generated quantities{
     real logPrA;        // individual learning temp
     real PrS;        // social learning temp
     vector[K] s_temp;
-    real lambda;           // stickiness parameter
     real phi;           // stickiness parameter
-    real gamma;         // social weight
+    real sigma;         // social weight
     real fc;     // conform exponent
+    real tau;           // stickiness parameter
     matrix[N,K] PrPreds;
 
 
@@ -96,12 +95,12 @@ generated quantities{
 
         if ( bout[i]==1 ) {
             phi= inv_logit(  mu[1]);
-            gamma = inv_logit(mu[2]);
+            sigma = inv_logit(mu[2]);
             fc = exp(mu[3]);
-            lambda = exp( mu[4]) ;
+            tau = exp( mu[4]) ;
         }
 
-        logPrA = lambda*AC[tech[i]] - log_sum_exp( lambda*AC );
+        logPrA = tau*AC[tech[i]] - log_sum_exp( tau*AC );
 
         //conformity aspect below
         if ( bout[i] > 1 ) {
@@ -109,20 +108,20 @@ generated quantities{
                 // compute frequency cue
                 for ( j in 1:K ) s_temp[j] = pow(s[i,j],fc);
                 PrS = s_temp[tech[i]]/sum(s_temp);
-                log_lik[i] =  log( (1-gamma)*exp(logPrA) + gamma*PrS )  ;
+                log_lik[i] =  log( (1-sigma)*exp(logPrA) + sigma*PrS )  ;
                 for(j in 1:K){
-                PrPreds[i,j] = (1-gamma)*exp( lambda*AC[j] - log_sum_exp( lambda*AC) ) + gamma*(s_temp[j]/sum(s_temp)) ;
+                PrPreds[i,j] = (1-sigma)*exp( tau*AC[j] - log_sum_exp( tau*AC) ) + sigma*(s_temp[j]/sum(s_temp)) ;
                 }
             } else {
                  log_lik[i] = (logPrA);
                  for(j in 1:K){
-                    PrPreds[i,j] = exp( lambda*AC[j] - log_sum_exp( lambda*AC) );
+                    PrPreds[i,j] = exp( tau*AC[j] - log_sum_exp( tau*AC) );
                  }
             }
         } else {
                  log_lik[i] = (logPrA);
                  for(j in 1:K){
-                    PrPreds[i,j] = exp( lambda*AC[j] - log_sum_exp( lambda*AC) );
+                    PrPreds[i,j] = exp( tau*AC[j] - log_sum_exp( tau*AC) );
                 }
             }
      }//i
