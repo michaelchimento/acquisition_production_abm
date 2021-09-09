@@ -17,10 +17,10 @@ from functools import partial
 
 #define the class behavior
 class behavior:
-    def __init__(self,name,payoff,base_haz):
-        self.name = name
-        self.payoff = payoff
-        self.base_haz = base_haz
+    def __init__(self,name,payoff,base_rate):
+        self.name = name #string name of behavior
+        self.payoff = payoff #float payoff of behavior
+        self.base_rate = base_rate #baseline learning parameter (lambda_0) from NBDA
 
 class agent:
     '''
@@ -30,21 +30,20 @@ class agent:
     def __init__(self,ID,params_list):
         self.id = ID #keeps agents identifiable across simulations
         self.knowledge = {} #name, a_mat, i_mat, s_mat, p_mat,solve_count
-        self.ind_memory = []
-        self.temp_social_memory = []
-        self.long_social_memory = []
-        self.exposure = 0
-        self.naive = True
+        self.ind_memory = [] #records agent's own productions for the duration of the memory window
+        self.temp_social_memory = [] #records observed productions for the duration of the timestep
+        self.long_social_memory = [] #records lists of lists, each sublist from a single timestep within the memory window
+        self.naive = True # binary variable that flips to False once any behavior has been learned by the agent
+
         #EWA parameters
-        self.s_i = params_list[0]
-        self.g_i = params_list[1]
-        self.conformity = params_list[2]
-        self.inverse_temp = params_list[3]
-        self.cum_payoffs = 0
+        self.sigma = params_list[0] #social information bias
+        self.phi = params_list[1] #recent payoff bias
+        self.f_SI = params_list[2] #conformity of social influence exponent
+        self.tau = params_list[3] #inverse exploration parameter (conservatism)
 
     def observe(self,behavior):
-        #if behavior in self.knowledge:
-        self.temp_social_memory.append(behavior)
+        if behavior in self.knowledge:
+            self.temp_social_memory.append(behavior)
             #print("observation by {}: {}".format(self.id, self.knowledge[behavior]))
 
     def prune_ind_memory(self):
@@ -68,53 +67,56 @@ class agent:
         #print("payoff {}".format(reward))
         for known_behavior in self.knowledge.keys():
             if known_behavior==produced_behavior:
-                new_A_kit = (1 - self.g_i)*self.knowledge[known_behavior]["a_mat"] + self.g_i*reward
-                #assert new_A_kit >= self.knowledge[known_behavior]["a_mat"], print("Akit update of produced behavior bad{}".format(new_A_kit))
+                new_A_kt = (1 - self.phi)*self.knowledge[known_behavior]["a_mat"] + self.phi*reward
+                #assert new_A_kt >= self.knowledge[known_behavior]["a_mat"], print("Akit update of produced behavior bad{}".format(new_A_kt))
             else:
-                new_A_kit = (1 - self.g_i)*self.knowledge[known_behavior]["a_mat"] #null payoff for non-produced behavior
-                #assert new_A_kit <= self.knowledge[known_behavior]["a_mat"], print("Akit update of un-produced behavior bad {}".format(new_A_kit))
-            self.knowledge[known_behavior]["a_mat"] = new_A_kit
+                new_A_kt = (1 - self.phi)*self.knowledge[known_behavior]["a_mat"] #null payoff for non-produced behavior
+                #assert new_A_kt <= self.knowledge[known_behavior]["a_mat"], print("Akit update of un-produced behavior bad {}".format(new_A_kt))
+            self.knowledge[known_behavior]["a_mat"] = new_A_kt
 
     def I_mat_update(self):
-        #print("Agent{} I_mat_update(). old I_mat: {}".format(self.id, self.I_mat))
-        A_mat = np.array([behavior["a_mat"] for behavior in self.knowledge.values()])
-        tau_by_A_mat = np.multiply(A_mat, self.inverse_temp)
-        summed_A_mat = logsumexp(tau_by_A_mat)
-        #assert np.sum(new_I_mat)<=1, print(new_I_mat, np.sum(new_I_mat))
-        for count, behavior in enumerate(self.knowledge.values()):
-            behavior["i_mat"] = tau_by_A_mat[count] - summed_A_mat
+        if not self.naive:
+            #print("Agent{} I_mat_update(). old I_mat: {}".format(self.id, self.I_mat))
+            A_mat = np.array([behavior["a_mat"] for behavior in self.knowledge.values()])
+            tau_by_A_mat = np.multiply(A_mat, self.tau)
+            summed_A_mat = logsumexp(tau_by_A_mat)
+            #assert np.sum(new_I_mat)<=1, print(new_I_mat, np.sum(new_I_mat))
+            for count, behavior in enumerate(self.knowledge.values()):
+                behavior["i_mat"] = tau_by_A_mat[count] - summed_A_mat
 
 
     def S_mat_update(self):
-        social_memory = [item for subl in self.long_social_memory for item in subl if item in self.knowledge]
-        assert len(social_memory) <= (N * memory_window), print("memory {} exceeds memory window {}".format(len(social_memory),N*memory_window))
-        if len(social_memory)>0:
-            denom=0
-            for behavior in self.knowledge.keys():
-                denom += social_memory.count(behavior)**self.conformity
-            for behavior in self.knowledge.keys():
-                new_S_kit = (social_memory.count(behavior)**self.conformity) / denom
-                #assert new_S_kit<=1, print("S matrix value exceeds 1", new_S_kit)
-                self.knowledge[behavior]["s_mat"] = new_S_kit
+        if not self.naive:
+            social_memory = [item for subl in self.long_social_memory for item in subl]
+            #assert len(social_memory) <= (N * memory_window), print("memory {} exceeds memory window {}".format(len(social_memory),N*memory_window))
+            if len(social_memory)>0:
+                denom=0
+                for behavior in self.knowledge.keys():
+                    denom += social_memory.count(behavior)**self.f_SI
+                for behavior in self.knowledge.keys():
+                    new_S_kt = (social_memory.count(behavior)**self.f_SI) / denom
+                    #assert new_S_kt<=1, print("S matrix value exceeds 1", new_S_kt)
+                    self.knowledge[behavior]["s_mat"] = new_S_kt
 
-        #if no social memory present
-        else:
-            for count,behavior in enumerate(self.knowledge.values()):
-                new_S_kit = 0
-                behavior["s_mat"] = new_S_kit
+            #if no social memory present
+            else:
+                for count,behavior in enumerate(self.knowledge.values()):
+                    new_S_kt = 0
+                    behavior["s_mat"] = new_S_kt
 
 
     def P_mat_update(self):
-        #print("Agent{} P_mat_update(). Old P_mat{}".format(self.id, self.P_mat))
-        social_memory = np.array([x["s_mat"] for x in self.knowledge.values()])
-        #print("social memory {}".format(social_memory))
-        if np.sum(social_memory)>0:
-            for behavior in self.knowledge.values():
-                behavior["p_mat"] = (1 - self.s_i)*np.exp(behavior["i_mat"]) + self.s_i*behavior["s_mat"]
+        if not self.naive:
+            #print("Agent{} P_mat_update(). Old P_mat{}".format(self.id, self.P_mat))
+            social_memory = np.array([x["s_mat"] for x in self.knowledge.values()])
+            #print("social memory {}".format(social_memory))
+            if np.sum(social_memory)>0:
+                for behavior in self.knowledge.values():
+                    behavior["p_mat"] = (1 - self.sigma)*np.exp(behavior["i_mat"]) + self.sigma*behavior["s_mat"]
 
-        else:
-            for behavior in self.knowledge.values():
-                behavior["p_mat"] = np.exp(behavior["i_mat"])
+            else:
+                for behavior in self.knowledge.values():
+                    behavior["p_mat"] = np.exp(behavior["i_mat"])
 
 
     def produceBehavior(self):
@@ -124,7 +126,7 @@ class agent:
         p_mat = np.array([x["p_mat"] for x in self.knowledge.values()])
         #assert np.sum(p_mat)==1, "pmat not summing to 1: {}".format(np.sum(p_mat))
         #prevent negative values from floating point error
-        p_mat = np.clip(p_mat, 0, 1)
+        #p_mat = np.clip(p_mat, 0, 1)
 
         #choose production with probability from p_mat
         try:
@@ -132,31 +134,26 @@ class agent:
         except Exception as e:
             print("Error producing behavior:", e)
             print(sum(p_mat))
-            sys.exit()
 
-        #adds production to memory
-        self.ind_memory.append(production)
-        #update payoff, attraction and probability for next production
-        self.A_mat_update(production)
-        self.cum_payoffs += all_behaviors[production].payoff
+
+        self.ind_memory.append(production) #adds production to memory
+
+        self.A_mat_update(production) #update attraction score for next production
+
         return production
 
     def acquire_behavior(self, G):
         neighbors = [node for node in G.neighbors(self.id)]
-
         for behavior.name in all_behaviors:
             if behavior.name not in self.knowledge.keys():
                 acquisition_prob = lambda_t(behavior.name,neighbors,G)
                 #assert 0 <= acquisition_prob <=1, "resulting acquision prob from NBDA must be between 0 and 1"
                 if random.random() < acquisition_prob:
-                    #print("Agent {} learned behavior {}".format(self.id, behavior.name))
                     self.knowledge[behavior.name] = {"a_mat": 0,"i_mat": 0,"s_mat":0,"p_mat":0}
-                    #we can conservatively assume that the behavior has been seen at least once
                     self.I_mat_update()
                     self.S_mat_update()
                     self.P_mat_update()
                     self.naive=False
-
 
 def generate_network(graph_type,params_list):
     if graph_type == "complete":
@@ -171,29 +168,34 @@ def generate_network(graph_type,params_list):
         G = nx.barabasi_albert_graph(N, 4, seed=None)
     elif graph_type == "random_small_world":
         G = nx.connected_watts_strogatz_graph(N, int(N/2), 0, tries=200, seed=None)
+    elif graph_type == "custom_adj_list":
+        G = nx.read_adjlist(custom_adj_list_filename)
     else:
         print("Incorrect graph name!")
 
-    #give instance of agent object as 'data' attribute in each node
-    random_agent = random.randint(0, N-1)
+    random_agent = random.randint(0, N-1) #agent randomly selected as seed agent (see below)
+
     for x in list(G.nodes()):
-        G.nodes[x]['data'] = agent(x,params_list)
+        G.nodes[x]['data'] = agent(x,params_list) #give instance of agent object as 'data' attribute in each node
+
         if random.random() <= initial_knowledgable_prop:
-            G.nodes[x]['data'].knowledge["a"] = {"a_mat": 0,"i_mat": 0,"s_mat":0,"p_mat":0}
-            #G.nodes[x]['data'].long_social_memory.append(["a"])
+            G.nodes[x]['data'].naive=False
+            if full_initial_weights:
+                G.nodes[x]['data'].knowledge["a"] = {"a_mat": all_behaviors["a"].payoff,"i_mat": 0,"s_mat":0,"p_mat":0}
+            else:
+                G.nodes[x]['data'].knowledge["a"] = {"a_mat": 0,"i_mat": 0,"s_mat":0,"p_mat":0}
+
+            #seed one individual as knowledgable of the novel behavior
             if x==random_agent:
                 G.nodes[x]['data'].knowledge["b"] = {"a_mat": 0,"i_mat": 0,"s_mat":0,"p_mat":0}
-                #G.nodes[x]['data'].long_social_memory.append(["b"])
             G.nodes[x]['data'].I_mat_update()
             G.nodes[x]['data'].S_mat_update()
             G.nodes[x]['data'].P_mat_update()
-            G.nodes[x]['data'].naive=False
-            #print("Agent {} begins as knowledgable".format(x))
+
+
     return G
 
-
-##the following functions are used in the NBDA calculations of the sim###
-
+##the following functions are used in the NBDA generative model
 def NBDA(G):
     for agent in list(G.nodes()):
         G.nodes[agent]["data"].acquire_behavior(G)
@@ -232,12 +234,11 @@ def transmission_function(behavior,neighbors,G):
     #Freq dependent rule model Firth 2020
     elif NBDA_type == 3:
         #assert z_jt_type=="binary", "z_jt must be binary to appropriately calculate NBDA type 3 (conformity rule)"
-        numerator = z_jt_param**NBDA_conformity
-        denominator = z_jt_param**NBDA_conformity + ((len(neighbors)-z_jt_param) ** NBDA_conformity)
+        numerator = z_jt_param**f_SL
+        denominator = z_jt_param**f_SL + ((len(neighbors)-z_jt_param) ** f_SL)
         transmission_func = s_param * (numerator/denominator)
 
     return transmission_func
-
 
 #returns the second half of the NBDA equation relating to individual learning. Simplest case is a value of 1 or 0, but could take ind level variables
 def A_param():
@@ -262,7 +263,7 @@ def lambda_t(behavior, neighbors, G):
     asocial_learning_func = A_param()
 
     #lambda(t) = baseline rate function*(transmission_func + ind_learning_parameters)
-    acq_rate = all_behaviors[behavior].base_haz * (transmission_func + asocial_learning_func)
+    acq_rate = all_behaviors[behavior].base_rate * (transmission_func + asocial_learning_func)
 
     #convert from rate to probability within the last timestep that an agent has acquired the behavior
     acq_prob = 1-math.exp( -acq_rate )
@@ -278,88 +279,6 @@ def production_event(G, producer):
     for neighbor in neighbors:
         G.nodes[neighbor]["data"].observe(beh_production)
     return beh_production
-
-def update_exposure(G):
-    for agent in list(G.nodes()):
-        G.nodes[agent]["data"].exposure += 1
-
-def turnover_event(G,timestep,params_list):
-    #gets list of time steps each agent has been in the population
-    exposure_list = np.array([[i,G.nodes[i]["data"].exposure] for i in range(N)])
-    #print(exposure_list[:,1])
-    probs = np.divide(exposure_list[:,1], np.sum(exposure_list[:,1]))
-    #print(probs)
-
-    #chooses num_turnover agents for replacement
-    turnover_list = np.random.choice(exposure_list[:,0],replace = False, size = num_turnover,p=probs)
-    for n in turnover_list:
-        G.nodes[n]["data"] = agent(n,params_list)
-    #print("turnover_event(). turnover event: {} replaced".format(turnover_list))
-
-
-def create_csv(file_path):
-    #create variable names for behaviors to be included in simulation
-    behavior_list = ["behavior_{}".format(behavior.name) for behavior in all_behaviors.values()]
-    labels=["A_mat","I_mat","S_mat","P_mat"]
-    agent_matrix_list = ["behavior_{}_{}".format(behavior.name,label) for behavior in all_behaviors.values() for label in labels]
-
-    #writes header for main data
-    with open(file_path,"w") as fout:
-        fout.write("sim, turnover, num_turnover, graph_type, pop_size, memory_window, NBDA_type, NBDA_basehazard, NBDA_s_param, NBDA_z_jt_type, NBDA_conformity, EWA_soc_info_weight, EWA_recent_payoff_weight, EWA_conformity, EWA_inverse_temp, timestep, num_know_novel, {}, sum_cum_payoffs, {}\n".format(",".join(behavior_list),",".join(agent_matrix_list)))
-
-def write_csv(file_path,sim_num,params_list,timestep,num_know_novel,beh_freqs,sum_cum_payoffs,agent_matrix_values):
-    behavior_counts = [str(beh) for beh in beh_freqs.values()]
-    #print(behavior_counts)
-    count_string = ",".join(behavior_counts)
-
-    #writes header for main data
-    with open(file_path,"a+") as fout:
-        fout.write("{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}\n".format(sim_num,
-        turnover,
-        num_turnover,
-        graph_type,
-        N,
-        params_list[6],
-        NBDA_type,
-        base_hazard,
-        params_list[4],
-        params_list[5],
-        NBDA_conformity,
-        params_list[0],
-        params_list[1],
-        params_list[2],
-        params_list[3],
-        timestep,
-        num_know_novel,
-        count_string,
-        sum_cum_payoffs,
-        agent_matrix_values))
-
-def agent_values(agent, behavior,G):
-    #if the agent knows a behavior, return associated matrix values, otherwise return zeroes
-    if behavior in G.nodes[agent]["data"].knowledge.keys():
-        return [G.nodes[agent]["data"].knowledge[behavior]["a_mat"],
-        G.nodes[agent]["data"].knowledge[behavior]["i_mat"],
-        G.nodes[agent]["data"].knowledge[behavior]["s_mat"],
-        G.nodes[agent]["data"].knowledge[behavior]["p_mat"]]
-    else:
-        return [0,0,0,0]
-
-
-def peek_inside(G):
-    to_write_list = []
-    for behavior in all_behaviors.values():
-        #values for A_mat, I_mat, S_mat and P_mat
-        total_values = [0,0,0,0]
-        for agent in range(N):
-            agt_values = agent_values(agent,behavior.name,G)
-            #print(agt_values)
-            total_values = np.add(total_values,agt_values)
-        to_write_list += list(total_values)
-
-    agent_matrix_values_string = [str(v) for v in to_write_list]
-    amv_string = ",".join(agent_matrix_values_string)
-    return amv_string
 
 def create_agent_csv(file_path):
     #create variable names for behaviors to be included in simulation
@@ -393,10 +312,10 @@ def write_agent_csv(file_path, G,timestep,sim_num,params_list,num_know_novel):
             N,
             params_list[6],
             NBDA_type,
-            base_hazard,
+            base_rate,
             params_list[4],
             params_list[5],
-            NBDA_conformity,
+            f_SL,
             params_list[0],
             params_list[1],
             params_list[2],
@@ -414,8 +333,8 @@ def simulation(lock,master_sim_num,params_list):
     memory_window = params_list[6]
     global graph_type
     graph_type = params_list[7]
-    global NBDA_conformity
-    NBDA_conformity = params_list[8]
+    global f_SL
+    f_SL = params_list[8]
 
     #get unique simulation number for this round, increment global master_sim_num
     with lock:
@@ -423,11 +342,7 @@ def simulation(lock,master_sim_num,params_list):
         master_sim_num.value += 1
 
     #create csv file with headers
-    file_path = "../raw_data/gtype_{}_sim_{}.csv".format(graph_type, sim_num)
     agent_file_path = "../agent_data/gtype_{}_sim_{}.csv".format(graph_type, sim_num)
-
-    #if not isfile(file_path):
-    create_csv(file_path)
     create_agent_csv(agent_file_path)
 
     print("simulation{} EWA(s_i{} g_i{} conformity{} inverse_temp{}) NBDA(s_param{}, z_jt_type{}, soc_memory_window{})".format(sim_num,params_list[0],params_list[1],params_list[2],params_list[3],params_list[4],params_list[5],params_list[6]))
@@ -438,6 +353,11 @@ def simulation(lock,master_sim_num,params_list):
     final_timestep=0
     timestep=0
     while True:
+
+        #print(beh_freqs)
+        know_novel = [agent for agent in range(N) if "b" in G.nodes[agent]["data"].knowledge.keys()]
+        num_know_novel = len(know_novel)
+
         #create counter object to keep track of frequencies of behaviors for this timestep
         beh_freqs = Counter()
         for behavior in all_behaviors.values():
@@ -453,16 +373,9 @@ def simulation(lock,master_sim_num,params_list):
                 #print(beh)
                 beh_freqs[beh] += 1
 
-        sum_cum_payoffs = 0
-
-
-        #print(beh_freqs)
-        know_novel = [agent for agent in range(N) if "b" in G.nodes[agent]["data"].knowledge.keys()]
-        num_know_novel = len(know_novel)
-
         write_agent_csv(agent_file_path, G,timestep,sim_num,params_list,num_know_novel)
 
-        #resolves internal counts to the memory window
+        #housekeeping
         for agent in range(N):
             G.nodes[agent]["data"].prune_ind_memory()
             G.nodes[agent]["data"].consolidate_social_memory()
@@ -471,9 +384,6 @@ def simulation(lock,master_sim_num,params_list):
             G.nodes[agent]["data"].I_mat_update()
             G.nodes[agent]["data"].S_mat_update()
             G.nodes[agent]["data"].P_mat_update()
-            sum_cum_payoffs += G.nodes[agent]["data"].cum_payoffs
-
-
 
         if not flag and num_know_novel==N:
             final_timestep=timestep*2
@@ -491,24 +401,21 @@ def simulation(lock,master_sim_num,params_list):
 
 #simulation parameters
 replicates=1
-t_steps = 2000 #timesteps to run simulation
+full_initial_weights = False
 
 ### Population parameters ###
 N = 16 #population size
 initial_knowledgable_prop = 1 #initial proportion of knowledgable individuals in the population
 graph_types = ["random_small_world"] #sets network structure
 custom_adj_list_filename = ""
-turnover = False #toggle turnover events
-turnover_interval = 10 #interval between turnover events
-num_turnover=0 #number of individuals turned over
 
 ### NBDA parameters ###
-NBDA_type = 0 # 0: Unbounded general form; 1: bounded, linked S and (1-S); NEED TO ADD: ILV form allowing for effects for social AND individual learning, requires vectors Gamma_i, Beta_i
-NBDA_conformity_values = [1]
+NBDA_type = 3 # 0: Unbounded general form; 1: bounded, linked S and (1-S); NEED TO ADD: ILV form allowing for effects for social AND individual learning, requires vectors Gamma_i, Beta_i
+f_SL_values = [1]
 s_param_values = [0] #s parameter from NBDA indicating strength of social learning per unit of connection
 z_jt_type_values = ["proportional"] #"binary" or "proportional", proportional assigns z_j(t) a number between [0,1] depending on how frequently the produced behavior in previous timestep
 asocial_learning = True #True or false, depending on if asocial learning occurs
-base_hazard = .01 #the base hazard is the underlying rate in every timestep that the behavior could be acquired
+base_rate = .01 #the base hazard is the underlying rate in every timestep that the behavior could be acquired
 beh_per_TS = 1 #behaviors individuals perform per timestep
 
 #EWA Parameters
@@ -519,8 +426,8 @@ inverse_temp_values = [1] #sensitivity to differences in payoffs
 memory_window_values = [25] #how far back the agent can remember (in time steps) the behaviors that other agents produce
 
 #create dictionary of all behaviors
-all_behaviors = {"a": behavior(name = "a", payoff = 1, base_haz = base_hazard),
-                 "b": behavior("b", 1, base_hazard)}
+all_behaviors = {"a": behavior(name = "a", payoff = 1, base_rate = base_rate),
+                 "b": behavior("b", 1, base_rate)}
 
 if __name__=="__main__":
 
@@ -532,7 +439,7 @@ if __name__=="__main__":
         lock = manager.Lock()
 
         #create massive list of other parameter values
-        params_list = [(s_i,g_i,conformity,inverse_temp,s_param,z_jt_type,memory_window,graph_type,NBDA_conformity) for s_i in s_i_values for g_i in g_i_values for conformity in conformity_values for inverse_temp in inverse_temp_values for s_param in s_param_values for z_jt_type in z_jt_type_values for memory_window in memory_window_values for graph_type in graph_types for NBDA_conformity in NBDA_conformity_values for replicate in range(replicates)]
+        params_list = [(s_i,g_i,conformity,inverse_temp,s_param,z_jt_type,memory_window,graph_type,f_SL) for s_i in s_i_values for g_i in g_i_values for conformity in conformity_values for inverse_temp in inverse_temp_values for s_param in s_param_values for z_jt_type in z_jt_type_values for memory_window in memory_window_values for graph_type in graph_types for f_SL in f_SL_values for replicate in range(replicates)]
 
         random.shuffle(params_list)
 
@@ -542,40 +449,15 @@ if __name__=="__main__":
         with Pool(processes=cpu_count()-1) as pool:
             pool.map(func,params_list)
 
-
     #where concatenated dataframes will be put after all sims finish running
     new_directory_path="../concat_data/csvs"
-
-    '''
-
-    #where raw data will be put
-    directory_path="../raw_data"
-
-    #concating dataframes
-    df_list = [pd.read_csv(join(directory_path,f)) for f in listdir(directory_path) if ".csv" in f]
-    df_concat = pd.concat(df_list)
-
-    #set final filename here
-    df_concat.to_csv(join(new_directory_path,"EWA_inference_asocial.csv".format(s_param_values,memory_window_values[0],base_hazard)), index = False)
-
-    #remove raw data files
-    for f in listdir(directory_path):
-        if ".csv" in f:
-            remove(join(directory_path,f))
-
-    '''
-
     #Only saves agent data
     directory_path="../agent_data"
-
-
     #concating dataframes
     df_list = [pd.read_csv(join(directory_path,f)) for f in listdir(directory_path) if ".csv" in f]
     df_concat = pd.concat(df_list)
-
     #set final filename here
     df_concat.to_csv(join(new_directory_path,"EWA_inference_asocial_agents.csv"), index = False)
-
     #remove raw data files
     for f in listdir(directory_path):
         if ".csv" in f:

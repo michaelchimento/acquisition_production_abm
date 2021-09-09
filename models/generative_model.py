@@ -12,6 +12,7 @@ import pandas as pd
 from os import listdir,cpu_count,remove
 import time
 from scipy.special import logsumexp
+#replace with file of params you'd like to sim
 from paramlist_equiv_payoffs_asocial_s import *
 
 #define the class behavior
@@ -90,7 +91,7 @@ class agent:
     def S_mat_update(self):
         if not self.naive:
             social_memory = [item for subl in self.long_social_memory for item in subl]
-            assert len(social_memory) <= (N * memory_window), print("memory {} exceeds memory window {}".format(len(social_memory),N*memory_window))
+            #assert len(social_memory) <= (N * memory_window), print("memory {} exceeds memory window {}".format(len(social_memory),N*memory_window))
             if len(social_memory)>0:
                 denom=0
                 for behavior in self.knowledge.keys():
@@ -181,21 +182,19 @@ def generate_network(graph_type,params_list):
         G.nodes[x]['data'] = agent(x,params_list) #give instance of agent object as 'data' attribute in each node
 
         if random.random() <= initial_knowledgable_prop:
+            G.nodes[x]['data'].naive=False
             if full_initial_weights:
                 G.nodes[x]['data'].knowledge["a"] = {"a_mat": all_behaviors["a"].payoff,"i_mat": 0,"s_mat":0,"p_mat":0}
             else:
                 G.nodes[x]['data'].knowledge["a"] = {"a_mat": 0,"i_mat": 0,"s_mat":0,"p_mat":0}
-            G.nodes[x]['data'].A_mat_update("a")
 
             #seed one individual as knowledgable of the novel behavior
             if x==random_agent:
                 G.nodes[x]['data'].knowledge["b"] = {"a_mat": 0,"i_mat": 0,"s_mat":0,"p_mat":0}
-                G.nodes[x]['data'].A_mat_update("b")
-
             G.nodes[x]['data'].I_mat_update()
             G.nodes[x]['data'].S_mat_update()
             G.nodes[x]['data'].P_mat_update()
-            G.nodes[x]['data'].naive=False
+
 
     return G
 
@@ -396,16 +395,6 @@ def simulation(lock,master_sim_num,params_list):
                 produced_behavior = production_event(G, individual)
                 beh_freqs[produced_behavior] += 1
 
-        #resolves internal counts to the memory window
-        for agent in range(N):
-            G.nodes[agent]["data"].prune_ind_memory()
-            G.nodes[agent]["data"].consolidate_social_memory()
-            G.nodes[agent]["data"].prune_social_memory()
-            G.nodes[agent]["data"].reset_temp_social_memory()
-            G.nodes[agent]["data"].I_mat_update()
-            G.nodes[agent]["data"].S_mat_update()
-            G.nodes[agent]["data"].P_mat_update()
-
         # write data and end sim when at full diffusion
         if num_know_novel==N:
             write_csv(file_path,sim_num,params_list,timestep,num_know_novel,beh_freqs,agent_matrix_values)
@@ -414,6 +403,16 @@ def simulation(lock,master_sim_num,params_list):
         #write data
         if timestep%10==0:
             write_csv(file_path,sim_num,params_list,timestep,num_know_novel,beh_freqs,agent_matrix_values)
+
+        #housekeeping for next timestep
+        for agent in range(N):
+            G.nodes[agent]["data"].prune_ind_memory()
+            G.nodes[agent]["data"].consolidate_social_memory()
+            G.nodes[agent]["data"].prune_social_memory()
+            G.nodes[agent]["data"].reset_temp_social_memory()
+            G.nodes[agent]["data"].I_mat_update()
+            G.nodes[agent]["data"].S_mat_update()
+            G.nodes[agent]["data"].P_mat_update()
 
         #run NBDA calculations
         NBDA(G)
@@ -439,19 +438,16 @@ if __name__=="__main__":
         with Pool(processes=cpu_count()-1) as pool:
             pool.map(func,params_list)
 
-    #where raw data will be put
+    #once sims finish collect data and put into 1 csv
+    #where raw data is put
     directory_path="../raw_data"
-
     #where concatenated dataframes will be put after all sims finish running
     new_directory_path="../concat_data/csvs"
-
     #concating dataframes
     df_list = [pd.read_csv(join(directory_path,f)) for f in listdir(directory_path) if ".csv" in f]
     df_concat = pd.concat(df_list)
-
     #set final filename here
     df_concat.to_csv(join(new_directory_path,file_name), index = False)
-
     #remove raw data files
     for f in listdir(directory_path):
         if ".csv" in f:
