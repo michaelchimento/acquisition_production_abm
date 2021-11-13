@@ -1,7 +1,6 @@
 *.csv
-data/*.csv
-concat_data/*.csv
-concat_data/*.Rda
+*.Rda
+*.txt
 *.Rhistory
 *.png
 *.pdf

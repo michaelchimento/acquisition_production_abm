@@ -13,7 +13,7 @@ from os import listdir,cpu_count,remove
 import time
 from scipy.special import logsumexp
 #replace with file of params you'd like to sim
-from paramlist_equiv_payoffs_asocial_s import *
+from paramlist_GENERATIVE_fullweights import *
 
 #define the class behavior
 class behavior:
@@ -37,11 +37,14 @@ class agent:
         self.temp_social_memory = [] #records observed productions for the duration of the timestep
         self.long_social_memory = [] #records lists of lists, each sublist from a single timestep within the memory window
         self.naive = True # binary variable that flips to False once any behavior has been learned by the agent
+        self.produced_b = False #binary variable that flips to True once the novel behavior has been performed.
+        self.time_acquired_b = -1
+        self.time_produced_b = -1
 
         #EWA parameters
         self.sigma = params_list[0] #social information bias
         self.phi = params_list[1] #recent payoff bias
-        self.f_SI = params_list[2] #conformity of social influence exponent
+        self.f_P = params_list[2] #conformity of social influence exponent
         self.tau = params_list[3] #inverse exploration parameter (conservatism)
 
     def observe(self,behavior):
@@ -95,9 +98,9 @@ class agent:
             if len(social_memory)>0:
                 denom=0
                 for behavior in self.knowledge.keys():
-                    denom += social_memory.count(behavior)**self.f_SI
+                    denom += social_memory.count(behavior)**self.f_P
                 for behavior in self.knowledge.keys():
-                    new_S_kt = (social_memory.count(behavior)**self.f_SI) / denom
+                    new_S_kt = (social_memory.count(behavior)**self.f_P) / denom
                     #assert new_S_kt<=1, print("S matrix value exceeds 1", new_S_kt)
                     self.knowledge[behavior]["s_mat"] = new_S_kt
 
@@ -122,7 +125,7 @@ class agent:
                     behavior["p_mat"] = np.exp(behavior["i_mat"])
 
 
-    def produceBehavior(self):
+    def produceBehavior(self, timestep):
         #print("Agent{} produceBehavior(). P_mat is {}".format(self.id, self.P_mat))
         behavior_choices = [behavior for behavior in self.knowledge.keys()]
         #print(behavior_choices)
@@ -138,14 +141,16 @@ class agent:
             print("Error producing behavior:", e)
             print(sum(p_mat))
 
-
-        self.ind_memory.append(production) #adds production to memory
-
-        self.A_mat_update(production) #update attraction score for next production
+        else:
+            if production=="b" and self.produced_b==False:
+                self.time_produced_b=timestep
+                self.produced_b=True
+            self.ind_memory.append(production) #adds production to memory
+            self.A_mat_update(production) #update attraction score for next production
 
         return production
 
-    def acquire_behavior(self, G):
+    def acquire_behavior(self, G, timestep):
         neighbors = [node for node in G.neighbors(self.id)]
         for behavior.name in all_behaviors:
             if behavior.name not in self.knowledge.keys():
@@ -153,6 +158,7 @@ class agent:
                 #assert 0 <= acquisition_prob <=1, "resulting acquision prob from NBDA must be between 0 and 1"
                 if random.random() < acquisition_prob:
                     self.naive=False
+                    self.time_acquired_b=timestep
                     self.knowledge[behavior.name] = {"a_mat": 0,"i_mat": 0,"s_mat":0,"p_mat":0}
                     self.I_mat_update()
                     self.S_mat_update()
@@ -163,15 +169,15 @@ def generate_network(graph_type,params_list):
     if graph_type == "complete":
         G = nx.complete_graph(N)
     elif graph_type == "random_regular":
-        G = nx.random_regular_graph(int(N/2), N, seed=None)
+        G = nx.random_regular_graph(int(N/4), N, seed=None)
     elif graph_type == "random_erdos":
-        G = nx.gnp_random_graph(N, 0.5333, seed=None, directed=False)
+        G = nx.gnp_random_graph(N, 0.26087, seed=None, directed=False) # khat=p(n-1)
         while not nx.is_connected(G):
-            G = nx.gnp_random_graph(N, 0.5333, seed=None, directed=False)
+            G = nx.gnp_random_graph(N, 0.26087, seed=None, directed=False)
     elif graph_type == "random_barabasi":
-        G = nx.barabasi_albert_graph(N, 4, seed=None)
+        G = nx.barabasi_albert_graph(N, 3, seed=None) #khat=2m
     elif graph_type == "random_small_world":
-        G = nx.connected_watts_strogatz_graph(N, int(N/2), 0, tries=200, seed=None)
+        G = nx.connected_watts_strogatz_graph(N, int(N/4), 0, tries=200, seed=None)
     elif graph_type == "custom_adj_list":
         G = nx.read_adjlist(custom_adj_list_filename)
     else:
@@ -192,17 +198,57 @@ def generate_network(graph_type,params_list):
             #seed one individual as knowledgable of the novel behavior
             if x==random_agent:
                 G.nodes[x]['data'].knowledge["b"] = {"a_mat": 0,"i_mat": 0,"s_mat":0,"p_mat":0}
+                G.nodes[x]['data'].time_acquired_b = 0
+
             G.nodes[x]['data'].I_mat_update()
             G.nodes[x]['data'].S_mat_update()
             G.nodes[x]['data'].P_mat_update()
+    return G
 
+def NBDA_generate_network(graph_type,params_list):
+    if graph_type == "complete":
+        G = nx.complete_graph(N)
+    elif graph_type == "random_regular":
+        G = nx.random_regular_graph(int(N/10), N, seed=None)
+    elif graph_type == "random_erdos":
+        G = nx.gnp_random_graph(N, 0.10101, seed=None, directed=False) # khat=p(n-1)
+        while not nx.is_connected(G):
+            G = nx.gnp_random_graph(N, 0.10101, seed=None, directed=False)
+    elif graph_type == "random_barabasi":
+        G = nx.barabasi_albert_graph(N, 5, seed=None) #khat=2m
+    elif graph_type == "random_small_world":
+        G = nx.connected_watts_strogatz_graph(N, int(N/10), 0, tries=200, seed=None)
+    elif graph_type == "custom_adj_list":
+        G = nx.read_adjlist(custom_adj_list_filename)
+    else:
+        print("Incorrect graph name!")
 
+    random_agent = random.randint(0, N-1) #agent randomly selected as seed agent (see below)
+
+    for x in list(G.nodes()):
+        G.nodes[x]['data'] = agent(x,params_list) #give instance of agent object as 'data' attribute in each node
+
+        if random.random() <= initial_knowledgable_prop:
+            G.nodes[x]['data'].naive=False
+            if full_initial_weights:
+                G.nodes[x]['data'].knowledge["a"] = {"a_mat": all_behaviors["a"].payoff,"i_mat": 0,"s_mat":0,"p_mat":0}
+            else:
+                G.nodes[x]['data'].knowledge["a"] = {"a_mat": 0,"i_mat": 0,"s_mat":0,"p_mat":0}
+
+            #seed one individual as knowledgable of the novel behavior
+            if x==random_agent:
+                G.nodes[x]['data'].knowledge["b"] = {"a_mat": 0,"i_mat": 0,"s_mat":0,"p_mat":0}
+                G.nodes[x]['data'].time_acquired_b = 0
+
+            G.nodes[x]['data'].I_mat_update()
+            G.nodes[x]['data'].S_mat_update()
+            G.nodes[x]['data'].P_mat_update()
     return G
 
 ##the following functions are used in the NBDA generative model
-def NBDA(G):
+def NBDA(G,timestep):
     for agent in list(G.nodes()):
-        G.nodes[agent]["data"].acquire_behavior(G)
+        G.nodes[agent]["data"].acquire_behavior(G, timestep+1)
 
 #loops through neighbors and produces either a binary or proportion of all behaviors produced by each neighbor which are a given behavior. This value is then summed for all neighbors of the focal individual.
 def z_jt(behavior, neighbors, G):
@@ -217,6 +263,9 @@ def z_jt(behavior, neighbors, G):
             elif z_jt_type=="proportional":
             	#how many times a neighbor produces the behavior, over the total # of behaviors produced within the memory window
                 z_jt += G.nodes[neighbor]["data"].ind_memory.count(behavior)/memory_window
+
+            else:
+                print("problem with z_jt calculation")
 
     return z_jt
 
@@ -238,15 +287,14 @@ def transmission_function(behavior,neighbors,G):
     #Freq dependent rule model Firth 2020
     elif NBDA_type == 3:
         #assert z_jt_type=="binary", "z_jt must be binary to appropriately calculate NBDA type 3 (conformity rule)"
-        numerator = z_jt_param**f_SL
-        denominator = z_jt_param**f_SL + ((len(neighbors)-z_jt_param) ** f_SL)
+        numerator = z_jt_param**f_T
+        denominator = z_jt_param**f_T + ((len(neighbors)-z_jt_param) ** f_T)
         transmission_func = s_param * (numerator/denominator)
 
     return transmission_func
 
 #returns the second half of the NBDA equation relating to individual learning. Simplest case is a value of 1 or 0, but could take ind level variables
 def A_param():
-
     if asocial_learning:
         if NBDA_type=="1":
             assert 0 <= s_param <=1, "s parameter must take a value between 0 and 1 for this type of NBDA."
@@ -274,9 +322,9 @@ def lambda_t(behavior, neighbors, G):
 
     return acq_prob
 
-def production_event(G, producer):
+def production_event(G, producer, timestep):
     #print("\n***new production_event***\nproducer is agent {:d} ".format(producer))
-    beh_production = G.nodes[producer]["data"].produceBehavior()
+    beh_production = G.nodes[producer]["data"].produceBehavior(timestep)
     #print("\n***new production_event***\nproducer is agent {:d}, produces {}".format(producer, beh))
 
     neighbors = [node for node in G.neighbors(producer)]
@@ -284,7 +332,7 @@ def production_event(G, producer):
         G.nodes[neighbor]["data"].observe(beh_production)
     return beh_production
 
-def create_csv(file_path):
+def create_csv(file_path, file_path_acq_prod):
     #create variable names for behaviors to be included in simulation
     behavior_list = ["behavior_{}".format(behavior.name) for behavior in all_behaviors.values()]
     labels=["A_mat","I_mat","S_mat","P_mat"]
@@ -292,33 +340,61 @@ def create_csv(file_path):
 
     #writes header for main data
     with open(file_path,"w") as fout:
-        fout.write("sim, graph_type, pop_size, memory_window, NBDA_type, NBDA_basehazard, NBDA_s_param, NBDA_z_jt_type, NBDA_conformity, EWA_soc_info_weight, EWA_recent_payoff_weight, EWA_conformity, EWA_tau, timestep, num_know_novel, {}, {}\n".format(",".join(behavior_list),",".join(agent_matrix_list)))
+        fout.write("sim, graph_type, pop_size, memory_window, NBDA_type, NBDA_basehazard, NBDA_s_param, NBDA_zjt_type, NBDA_conformity, EWA_soc_info_weight, EWA_recent_payoff_weight, EWA_conformity, EWA_tau, timestep, num_know_novel, num_produced_b, {}, {}\n".format(",".join(behavior_list),",".join(agent_matrix_list)))
 
-def write_csv(file_path,sim_num,params_list,timestep,num_know_novel,beh_freqs,agent_matrix_values):
+    #writes header for main data
+    with open(file_path_acq_prod,"w") as fout:
+        fout.write("sim, graph_type, pop_size, memory_window, NBDA_type, NBDA_basehazard, NBDA_s_param, NBDA_zjt_type, NBDA_conformity, EWA_soc_info_weight, EWA_recent_payoff_weight, EWA_conformity, EWA_tau, agent, timestep_acquisition_b, timestep_production_b\n")
+
+
+def write_csv(file_path,sim_num,params_list,timestep,num_know_novel,num_produced_b,beh_freqs,agent_matrix_values):
     behavior_counts = [str(beh) for beh in beh_freqs.values()]
     #print(behavior_counts)
     count_string = ",".join(behavior_counts)
 
     #writes header for main data
     with open(file_path,"a+") as fout:
-        fout.write("{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}\n".format(
+        fout.write("{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}\n".format(
         sim_num,
         graph_type,
         N,
-        params_list[6],
+        memory_window,
         NBDA_type,
         base_rate,
-        params_list[4],
-        params_list[5],
-        f_SL,
+        s_param,
+        z_jt_type,
+        f_T,
         params_list[0],
         params_list[1],
         params_list[2],
         params_list[3],
         timestep,
         num_know_novel,
+        num_produced_b,
         count_string,
         agent_matrix_values))
+
+def write_diffusion_csv(file_path,sim_num,params_list,G):
+    for agent in range(N):
+        #writes header for main data
+        with open(file_path,"a+") as fout:
+            fout.write("{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}\n".format(
+            sim_num,
+            graph_type,
+            N,
+            memory_window,
+            NBDA_type,
+            base_rate,
+            s_param,
+            z_jt_type,
+            f_T,
+            params_list[0],
+            params_list[1],
+            params_list[2],
+            params_list[3],
+            G.nodes[agent]["data"].id,
+            G.nodes[agent]["data"].time_acquired_b,
+            G.nodes[agent]["data"].time_produced_b))
 
 def agent_values(agent, behavior,G):
     #if the agent knows a behavior, return associated matrix values, otherwise return zeroes
@@ -354,8 +430,10 @@ def simulation(lock,master_sim_num,params_list):
     memory_window = params_list[6]
     global graph_type
     graph_type = params_list[7]
-    global f_SL
-    f_SL = params_list[8]
+    global f_T
+    f_T = params_list[8]
+
+
 
     #get unique simulation number for this round, increment global master_sim_num
     with lock:
@@ -363,17 +441,27 @@ def simulation(lock,master_sim_num,params_list):
         master_sim_num.value += 1
 
     #create csv file with headers
-    file_path = "../raw_data/_gtype_{}_sim_{}.csv".format(graph_type, sim_num)
+    file_path = "../model_outputs/csvs_raw/timestep_data/{}/sim_{}.csv".format(condition_name, sim_num)
+
+    file_path_acq_prod = "../model_outputs/csvs_raw/acq_prod_data/{}/sim_{}.csv".format(condition_name, sim_num)
 
     #if not isfile(file_path):
-    create_csv(file_path)
+    create_csv(file_path,file_path_acq_prod)
 
-    print("simulation{} EWA(sigma{} phi{} f_SI{} tau{}) NBDA(s_param{}, z_jt_type{}, soc_memory_window{}".format(sim_num,params_list[0],params_list[1],params_list[2],params_list[3],params_list[4],params_list[5],params_list[6]))
+    print("simulation{} EWA(sigma{} phi{} f_P{} tau{}) NBDA(s_param{}, z_jt_type{}, soc_memory_window{}".format(sim_num,params_list[0],params_list[1],params_list[2],params_list[3],params_list[4],params_list[5],params_list[6]))
 
     np.random.seed() #reset seed for random num generation
-    G = generate_network(graph_type,params_list) #create network populated with agents
+
+    if "NBDA" in condition_name:
+        G = NBDA_generate_network(graph_type,params_list)
+    else:
+        G = generate_network(graph_type,params_list) #create network populated with agents
+
+    nx.write_edgelist(G, "../model_outputs/csvs_raw/adjlists_data/{}/adjlist_sim_{}.txt".format(condition_name,sim_num))
 
     timestep=0
+    end_flag=-1
+
     while True:
 
         know_novel = [agent for agent in range(N) if "b" in G.nodes[agent]["data"].knowledge.keys()]
@@ -393,17 +481,23 @@ def simulation(lock,master_sim_num,params_list):
         #knowledgable individuals produce given number of behaviors beh_per_TS
         for individual in knowledgable:
             for interactions in range(beh_per_TS):
-                produced_behavior = production_event(G, individual)
+                produced_behavior = production_event(G, individual, timestep)
                 beh_freqs[produced_behavior] += 1
 
+        num_produced_b = len([agent for agent in range(N) if G.nodes[agent]["data"].produced_b == True ])
+
+
         # write data and end sim when at full diffusion
-        if num_know_novel==N:
-            write_csv(file_path,sim_num,params_list,timestep,num_know_novel,beh_freqs,agent_matrix_values)
-            break
+        if num_produced_b==N and end_flag==-1:
+            final_timestep = timestep+50
+            end_flag = final_timestep // 5 * 5 #allow to go 50 more timesteps past full production
 
         #write data
-        if timestep%10==0:
-            write_csv(file_path,sim_num,params_list,timestep,num_know_novel,beh_freqs,agent_matrix_values)
+        if timestep%5==0:
+            write_csv(file_path,sim_num,params_list,timestep,num_know_novel,num_produced_b,beh_freqs,agent_matrix_values)
+            if timestep==end_flag:
+                write_diffusion_csv(file_path_acq_prod,sim_num,params_list,G)
+                break
 
         #housekeeping for next timestep
         for agent in range(N):
@@ -416,10 +510,16 @@ def simulation(lock,master_sim_num,params_list):
             G.nodes[agent]["data"].P_mat_update()
 
         #run NBDA calculations
-        NBDA(G)
+        NBDA(G,timestep)
         timestep+=1
 
 if __name__=="__main__":
+
+    #clear out old adjlist
+    adjlist_path = "../model_outputs/csvs_raw/adjlists_data/{}".format(condition_name)
+    for f in listdir(adjlist_path):
+        if ".txt" in f:
+            remove(join(adjlist_path,f))
 
     #create manager to handle common memory for multicore processing
     with Manager() as manager:
@@ -429,7 +529,7 @@ if __name__=="__main__":
         lock = manager.Lock()
 
         #create massive list of other parameter values
-        params_list = [(sigma,phi,f_SI,tau,s_param,z_jt_type,memory_window,graph_type,f_SL) for sigma in sigma_values for phi in phi_values for f_SI in f_SI_values for tau in tau_values for s_param in s_param_values for z_jt_type in z_jt_type_values for memory_window in memory_window_values for graph_type in graph_types for f_SL in f_SL_values for replicate in range(replicates)]
+        params_list = [(sigma,phi,f_P,tau,s_param,z_jt_type,memory_window,graph_type,f_T) for sigma in sigma_values for phi in phi_values for f_P in f_P_values for tau in tau_values for s_param in s_param_values for z_jt_type in z_jt_type_values for memory_window in memory_window_values for graph_type in graph_types for f_T in f_T_values for replicate in range(replicates)]
 
         random.shuffle(params_list)
 
@@ -439,16 +539,31 @@ if __name__=="__main__":
         with Pool(processes=cpu_count()-1) as pool:
             pool.map(func,params_list)
 
-    #once sims finish collect data and put into 1 csv
+    #once sims finish collect timestep data and put into 1 csv
     #where raw data is put
-    directory_path="../raw_data"
+    directory_path="../model_outputs/csvs_raw/timestep_data/{}".format(condition_name)
     #where concatenated dataframes will be put after all sims finish running
-    new_directory_path="../concat_data/csvs"
+    new_directory_path="../model_outputs/csvs_concat"
     #concating dataframes
     df_list = [pd.read_csv(join(directory_path,f)) for f in listdir(directory_path) if ".csv" in f]
     df_concat = pd.concat(df_list)
     #set final filename here
     df_concat.to_csv(join(new_directory_path,file_name), index = False)
+    #remove raw data files
+    for f in listdir(directory_path):
+        if ".csv" in f:
+            remove(join(directory_path,f))
+
+    #once sims finish collect data and put into 1 csv
+    #where raw data is put
+    directory_path="../model_outputs/csvs_raw/acq_prod_data/{}".format(condition_name)
+    #where concatenated dataframes will be put after all sims finish running
+    new_directory_path="../model_outputs/csvs_concat"
+    #concating dataframes
+    df_list = [pd.read_csv(join(directory_path,f)) for f in listdir(directory_path) if ".csv" in f]
+    df_concat = pd.concat(df_list)
+    #set final filename here
+    df_concat.to_csv(join(new_directory_path,file_name_acq_prod), index = False)
     #remove raw data files
     for f in listdir(directory_path):
         if ".csv" in f:

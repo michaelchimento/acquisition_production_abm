@@ -34,8 +34,8 @@ class agent:
         self.naive = True # binary variable that flips to False once any behavior has been learned by the agent
 
         #EWA parameters
-        self.sigma = params_list[0] #social information bias
-        self.phi = params_list[1] #recent payoff bias
+        self.sigma = params_list[0] + np.random.normal(0, .01) #social information bias
+        self.phi = params_list[1] + np.random.normal(0, .01) #recent payoff bias
         self.f_SI = params_list[2] #conformity of social influence exponent
         self.tau = params_list[3] #inverse exploration parameter (conservatism)
 
@@ -168,15 +168,17 @@ def generate_network(graph_type,params_list):
     if graph_type == "complete":
         G = nx.complete_graph(N)
     elif graph_type == "random_regular":
-        G = nx.random_regular_graph(int(N/2), N, seed=None)
+        G = nx.random_regular_graph(int(N/4), N, seed=None)
     elif graph_type == "random_erdos":
-        G = nx.gnp_random_graph(N, 0.5333, seed=None, directed=False)
+        G = nx.gnp_random_graph(N, 0.26087, seed=None, directed=False) # khat=p(n-1)
         while not nx.is_connected(G):
-            G = nx.gnp_random_graph(N, 0.5333, seed=None, directed=False)
+            G = nx.gnp_random_graph(N, 0.26087, seed=None, directed=False)
     elif graph_type == "random_barabasi":
-        G = nx.barabasi_albert_graph(N, 4, seed=None)
+        G = nx.barabasi_albert_graph(N, 3, seed=None) #khat=2m
     elif graph_type == "random_small_world":
-        G = nx.connected_watts_strogatz_graph(N, int(N/2), 0, tries=200, seed=None)
+        G = nx.connected_watts_strogatz_graph(N, int(N/4), 0, tries=200, seed=None)
+    elif graph_type == "custom_adj_list":
+        G = nx.read_adjlist(custom_adj_list_filename)
     else:
         print("Incorrect graph name!")
 
@@ -201,7 +203,7 @@ def create_agent_csv(file_path):
 
     #writes header for main data
     with open(file_path,"w") as fout:
-        fout.write("sim, timestep, agent, choice, {}, {}, graph_type, pop_size, memory_window, NBDA_type, NBDA_basehazard, NBDA_s_param, NBDA_z_jt_type, NBDA_conformity, EWA_soc_info_weight, EWA_recent_payoff_weight, EWA_conformity, EWA_inverse_temp,num_know_novel\n".format(",".join(yield_list),",".join(obs_list)))
+        fout.write("sim, timestep, agent, choice, {}, {}, graph_type, pop_size, memory_window, NBDA_type, NBDA_basehazard, NBDA_s_param, NBDA_zjt_type, NBDA_conformity, EWA_soc_info_weight, EWA_recent_payoff_weight, EWA_conformity, EWA_inverse_temp, num_know_novel\n".format(",".join(yield_list),",".join(obs_list)))
 
 def write_agent_csv(file_path, G,timestep,sim_num,params_list,num_know_novel):
     for agent in range(N):
@@ -256,7 +258,7 @@ def simulation(params_list):
         master_sim_num.value += 1
 
     #create csv file with headers
-    agent_file_path = "../agent_data/gtype_{}_sim_{}.csv".format(graph_type, sim_num)
+    agent_file_path = "../model_outputs/csvs_raw/agent_data/sim_{}.csv".format(sim_num)
 
     create_agent_csv(agent_file_path)
 
@@ -303,21 +305,21 @@ if __name__=="__main__":
 
     #simulation parameters
     replicates= 1
-    t_steps = 500 #timesteps to run simulation
+    t_steps = 300 #timesteps to run simulation
 
     ### Population parameters ###
-    N = 16 #population size
+    N = 24 #population size
     initial_knowledgable_prop = 1 #initial proportion of knowledgable individuals in the population
-    graph_types = ["random_small_world"] #sets network structure
+    graph_types = ["random_regular"] #sets network structure
     custom_adj_list_filename = ""
 
     ### NBDA parameters ###
-    NBDA_type = 1 # 0: Unbounded general form; 1: bounded, linked S and (1-S); NEED TO ADD: ILV form allowing for effects for social AND individual learning, requires vectors Gamma_i, Beta_i
+    NBDA_type = 0 # 0: Unbounded general form; 1: bounded, linked S and (1-S); NEED TO ADD: ILV form allowing for effects for social AND individual learning, requires vectors Gamma_i, Beta_i
     NBDA_conformity_values = [1]
-    s_param_values = [50] #s parameter from NBDA indicating strength of social learning per unit of connection
+    s_param_values = [5] #s parameter from NBDA indicating strength of social learning per unit of connection
     z_jt_type_values = ["proportional"] #"binary" or "proportional", proportional assigns z_j(t) a number between [0,1] depending on how frequently the produced behavior in previous timestep
     asocial_learning = False #True or false, depending on if asocial learning occurs
-    base_rate = .01 #the base hazard is the underlying rate in every timestep that the behavior could be acquired
+    base_rate = .05 #the base hazard is the underlying rate in every timestep that the behavior could be acquired
     beh_per_TS = 1 #behaviors individuals perform per timestep
 
     #EWA Parameters
@@ -325,7 +327,7 @@ if __name__=="__main__":
     g_i_values = [0.25,0.5,0.75]#np.around(np.arange(0.1, 1.1, 0.4), 1) #recent payoff bias EWA values
     conformity_values = [1] #conformity exponent EWA values
     inverse_temp_values = [1] #sensitivity to differences in payoffs
-    memory_window_values = [25] #how far back the agent can remember (in time steps) the behaviors that other agents produce
+    memory_window_values = [10] #how far back the agent can remember (in time steps) the behaviors that other agents produce
 
     #create dictionary of all behaviors
     all_behaviors = {"a": behavior(name = "a", payoff = 1, base_rate = base_rate),
@@ -351,13 +353,13 @@ if __name__=="__main__":
 
 
     #once sims finish running, collect the agent data for inference
-    directory_path="../agent_data"
-    new_directory_path="../concat_data/csvs"
+    directory_path="../model_outputs/csvs_raw/agent_data"
+    new_directory_path="../model_outputs/csvs_concat"
     #concating dataframes
     df_list = [pd.read_csv(join(directory_path,f)) for f in listdir(directory_path) if ".csv" in f]
     df_concat = pd.concat(df_list)
     #set final filename here
-    df_concat.to_csv(join(new_directory_path,"EWA_inference_homogeneous_agents.csv"), index = False)
+    df_concat.to_csv(join(new_directory_path,"EWA_homogeneous_agents.csv"), index = False)
     #remove raw data files
     for f in listdir(directory_path):
         if ".csv" in f:
