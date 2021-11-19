@@ -6,7 +6,7 @@ library(grid)
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
 ####make diffusion charts
-load(file="../model_outputs/Rda_files/df_GEN_equiv_payoff2.Rda")
+load(file="../model_outputs/Rda_files/df_GEN_equiv_payoff.Rda")
 
 df_ABM_equiv_payoff = df_ABM_equiv_payoff %>% filter(EWA_conformity==1, EWA_tau=="non-conservative", NBDA_s_param==5,memory_window==30) %>% mutate(timestep=timestep+1)
 

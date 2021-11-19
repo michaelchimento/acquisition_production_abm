@@ -6,7 +6,7 @@ setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
 
 #chart proportions
-load(file="../model_outputs/Rda_files/df_GEN_equiv_payoff2.Rda")
+load(file="../model_outputs/Rda_files/df_GEN_equiv_payoff.Rda")
 
 
 
@@ -36,7 +36,7 @@ p1 = ggplot(df, aes(x=scaled_time, color=name))+
 p1
 
 #compare order of acquisition and production
-load(file="../model_outputs/Rda_files/df_GEN_equiv_payoffs_acq_prod2.Rda")
+load(file="../model_outputs/Rda_files/df_GEN_equiv_payoffs_acq_prod.Rda")
 
 df_equiv_payoffs_acq_prod %>%
   group_by(sim)%>%
@@ -111,7 +111,7 @@ df %>% ungroup() %>% group_by(NBDA_s_param) %>% summarize(mean(delta),HPDI(delta
 df %>% ungroup() %>% filter(order_acquisition!=1) %>% group_by(graph_type) %>% summarize(n=sum(order_acquisition==order_production)/n())
 df %>% ungroup() %>% group_by(graph_type) %>% summarize(mean(delta),HPDI(delta))
 
-ggplot(df %>% filter(EWA_tau=="non-conservative", EWA_conformity==1,memory_window==10)%>% group_by(graph_type,order_production,order_acquisition) %>% mutate(count=n()), aes(x=order_acquisition,y=order_production, fill=count))+
+ggplot(df %>% filter(EWA_tau=="non-conservative", EWA_conformity==1, memory_window==10)%>% group_by(graph_type,order_production,order_acquisition) %>% mutate(count=n()), aes(x=order_acquisition,y=order_production, fill=count))+
   facet_wrap(~graph_type)+
   geom_tile() +
   labs(x="Order of acquisition", y="Order of production", fill="count")+
@@ -144,7 +144,7 @@ ggsave("../output/Fig_S1_NBDAs_variance.png",height=5,width=14,scale=2,units="cm
 
 
 #densities of deltas
-load(file="../model_outputs/Rda_files/df_GEN_equiv_payoffs_acq_prod2.Rda")
+load(file="../model_outputs/Rda_files/df_GEN_equiv_payoffs_acq_prod.Rda")
 df = df_equiv_payoffs_acq_prod %>% mutate(delta=timestep_production_b - timestep_acquisition_b) %>% group_by(sim) %>% arrange(timestep_acquisition_b) %>% mutate(order_acquisition=row_number())
 df = df %>% group_by(sim) %>% arrange(timestep_production_b) %>% mutate(order_production=row_number())
 

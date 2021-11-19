@@ -2,6 +2,101 @@ library(tidyverse)
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 directory = "../model_outputs/csvs_concat/"
 
+
+####BASELINE production timestep data####
+df_baseline_P = read.csv(paste(directory,"BASELINE_production_timestep_data.csv",sep=""))
+df_baseline_P = df_baseline_P %>% mutate(prop_b=(behavior_b/(behavior_a+behavior_b)))
+#df_baseline_P = df_baseline_P %>% mutate(conformity = paste("NBDA conf.",NBDA_conformity,"EWA conf.",EWA_conformity))
+#df_baseline_P$conformity = as.factor(df_baseline_P$conformity)
+#levels(df_baseline_P$conformity) = c("None","Production","Transmission","Production & Transmission")
+df_baseline_P = df_baseline_P %>%
+  mutate(full_diffusion=ifelse(num_know_novel==max(pop_size), TRUE, FALSE),
+         full_first_prod=ifelse(num_produced_b==max(pop_size), TRUE, FALSE),
+         num_know_novel=num_know_novel/max(pop_size),
+         EWA_recent_payoff_weight = as.factor(EWA_recent_payoff_weight),
+         EWA_soc_info_weight = as.factor(EWA_soc_info_weight),
+         EWA_tau = as.factor(EWA_tau),
+         graph_type = as.factor(graph_type))
+
+levels(df_baseline_P$EWA_soc_info_weight) = c("weak","medium","strong")
+levels(df_baseline_P$EWA_tau) = c("non-conservative","conservative")
+levels(df_baseline_P$EWA_recent_payoff_weight) = c("weak","medium","strong")
+df_baseline_P$graph_type <- factor(df_baseline_P$graph_type, levels=c('random_regular','random_small_world', 'random_erdos', 'random_barabasi'))
+levels(df_baseline_P$graph_type) = c('random regular', 'small world', 'Erdos-Renyi',"Barabasi-Albert")
+#df_baseline_P = df_baseline_P %>% select(!c(behavior_a_A_mat,behavior_a_I_mat,behavior_a_S_mat,behavior_a_P_mat, behavior_b_A_mat,behavior_b_I_mat,behavior_b_P_mat,behavior_b_S_mat))
+save(df_baseline_P,file="../model_outputs/Rda_files/df_baseline_P_preprogrammed.Rda")
+remove(df_baseline_P)
+
+####BASELINE Production acquisition / production ####
+df_baseline_p_acq_prod = read.csv(paste(directory,"BASELINE_production_acq_prod.csv",sep=""))
+summary(df_baseline_p_acq_prod)
+#df_baseline_p_acq_prod = df_baseline_p_acq_prod %>% mutate(conformity = paste("NBDA conf.",NBDA_conformity,"EWA conf.",EWA_conformity))
+#df_baseline_p_acq_prod$conformity = as.factor(df_baseline_p_acq_prod$conformity)
+#levels(df_baseline_p_acq_prod$conformity) = c("None","Production","Transmission","Production & Transmission")
+df_baseline_p_acq_prod = df_baseline_p_acq_prod %>%
+  mutate(EWA_recent_payoff_weight = as.factor(EWA_recent_payoff_weight),
+         EWA_soc_info_weight = as.factor(EWA_soc_info_weight),
+         EWA_tau = as.factor(EWA_tau),
+         graph_type = as.factor(graph_type))
+
+levels(df_baseline_p_acq_prod$EWA_soc_info_weight) = c("weak","medium","strong")
+levels(df_baseline_p_acq_prod$EWA_recent_payoff_weight) = c("weak","medium","strong")
+levels(df_baseline_p_acq_prod$EWA_tau) = c("non-conservative","conservative")
+df_baseline_p_acq_prod$graph_type <- factor(df_baseline_p_acq_prod$graph_type, levels=c('random_regular','random_small_world', 'random_erdos', 'random_barabasi'))
+levels(df_baseline_p_acq_prod$graph_type) = c('random regular', 'small world', 'Erdos-Renyi',"Barabasi-Albert")
+summary(df_baseline_p_acq_prod)
+df_baseline_p_acq_prod = df_baseline_p_acq_prod %>% mutate(NBDA_zjt_type=as.factor(NBDA_zjt_type))
+save(df_baseline_p_acq_prod,file="../model_outputs/Rda_files/df_baseline_p_acq_prod_preprogrammed.Rda")
+remove(df_baseline_p_acq_prod)
+
+
+####BASELINE transmission timestep data ####
+df_baseline_T = read.csv(paste(directory,"BASELINE_transmission_timestep_data.csv",sep=""))
+df_baseline_T = df_baseline_T %>% mutate(prop_b=(behavior_b/(behavior_a+behavior_b)))
+#df_baseline_T = df_baseline_T %>% mutate(conformity = paste("NBDA conf.",NBDA_conformity,"EWA conf.",EWA_conformity))
+#df_baseline_T$conformity = as.factor(df_baseline_T$conformity)
+#levels(df_baseline_T$conformity) = c("None","Production","Transmission","Production & Transmission")
+df_baseline_T = df_baseline_T %>%
+  mutate(full_diffusion=ifelse(num_know_novel==max(pop_size), TRUE, FALSE),
+         full_first_prod=ifelse(num_produced_b==max(pop_size), TRUE, FALSE),
+         num_know_novel=num_know_novel/max(pop_size),
+         EWA_recent_payoff_weight = as.factor(EWA_recent_payoff_weight),
+         EWA_soc_info_weight = as.factor(EWA_soc_info_weight),
+         EWA_tau = as.factor(EWA_tau),
+         graph_type = as.factor(graph_type))
+
+levels(df_baseline_T$EWA_soc_info_weight) = c("weak","medium","strong")
+levels(df_baseline_T$EWA_tau) = c("non-conservative","conservative")
+levels(df_baseline_T$EWA_recent_payoff_weight) = c("weak","medium","strong")
+df_baseline_T$graph_type <- factor(df_baseline_T$graph_type, levels=c('random_regular','random_small_world', 'random_erdos', 'random_barabasi'))
+levels(df_baseline_T$graph_type) = c('random regular', 'small world', 'Erdos-Renyi',"Barabasi-Albert")
+#df_baseline_T = df_baseline_T %>% select(!c(behavior_a_A_mat,behavior_a_I_mat,behavior_a_S_mat,behavior_a_P_mat, behavior_b_A_mat,behavior_b_I_mat,behavior_b_P_mat,behavior_b_S_mat))
+save(df_baseline_T,file="../model_outputs/Rda_files/df_baseline_T.Rda")
+remove(df_baseline_T)
+
+####BASELINE transmission acquisition / production ####
+df_baseline_t_acq_prod = read.csv(paste(directory,"BASELINE_transmission_acq_prod.csv",sep=""))
+summary(df_baseline_t_acq_prod)
+#df_baseline_t_acq_prod = df_baseline_t_acq_prod %>% mutate(conformity = paste("NBDA conf.",NBDA_conformity,"EWA conf.",EWA_conformity))
+#df_baseline_t_acq_prod$conformity = as.factor(df_baseline_t_acq_prod$conformity)
+#levels(df_baseline_t_acq_prod$conformity) = c("None","Production","Transmission","Production & Transmission")
+df_baseline_t_acq_prod = df_baseline_t_acq_prod %>%
+  mutate(EWA_recent_payoff_weight = as.factor(EWA_recent_payoff_weight),
+         EWA_soc_info_weight = as.factor(EWA_soc_info_weight),
+         EWA_tau = as.factor(EWA_tau),
+         graph_type = as.factor(graph_type))
+
+levels(df_baseline_t_acq_prod$EWA_soc_info_weight) = c("weak","medium","strong")
+levels(df_baseline_t_acq_prod$EWA_recent_payoff_weight) = c("weak","medium","strong")
+levels(df_baseline_t_acq_prod$EWA_tau) = c("non-conservative","conservative")
+df_baseline_t_acq_prod$graph_type <- factor(df_baseline_t_acq_prod$graph_type, levels=c('random_regular','random_small_world', 'random_erdos', 'random_barabasi'))
+levels(df_baseline_t_acq_prod$graph_type) = c('random regular', 'small world', 'Erdos-Renyi',"Barabasi-Albert")
+summary(df_baseline_t_acq_prod)
+df_baseline_t_acq_prod = df_baseline_t_acq_prod %>% mutate(NBDA_zjt_type=as.factor(NBDA_zjt_type))
+save(df_baseline_t_acq_prod,file="../model_outputs/Rda_files/df_baseline_t_acq_prod.Rda")
+remove(df_baseline_t_acq_prod)
+
+
 ####GENERATIVE timestep data equivalent payoffs ####
 df_ABM_equiv_payoff = read.csv(paste(directory,"GENERATIVE_equiv_payoffs_timestep_data.csv",sep=""))
 df_ABM_equiv_payoff = df_ABM_equiv_payoff %>% mutate(prop_b=(behavior_b/(behavior_a+behavior_b)))

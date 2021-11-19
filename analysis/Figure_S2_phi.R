@@ -3,15 +3,12 @@
 library(tidyverse)
 library(ggpubr)
 library(ggridges)
-library(magick)
 library(grid)
 
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
 ####make diffusion charts
-load(file="../model_outputs/Rda_files/df_GEN_equiv_payoff2.Rda")
-
-#load(file="../concat_data/df_ABM_equiv.Rda")
+load(file="../model_outputs/Rda_files/df_GEN_equiv_payoff.Rda")
 df_ABM_equiv_payoff = df_ABM_equiv_payoff %>% filter(NBDA_s_param==5,memory_window==10, EWA_soc_info_weight=="medium", EWA_tau=="non-conservative", EWA_conformity==1) %>% mutate(timestep=timestep+1)
 end_point = max(df_ABM_equiv_payoff$timestep)
 
@@ -82,5 +79,6 @@ g2 = ggarrange(p1a,p2a,p1b,p2b, ncol=2,nrow=2, heights=c(1,4), legend = "top",al
 
 ggsave(g2, file="../output/Fig_5_phi.png",width=12,height=6,scale=2,units="cm")
 
-df %>% filter(full_diffusion==T) %>% group_by(EWA_recent_payoff_weight) %>% summarize(mean_timestep=mean(timestep))
+library(rethinking)
+df_ABM_fullweight %>% filter(full_diffusion==T) %>% group_by(sim) %>% slice(head=1) %>% ungroup() %>% group_by(EWA_recent_payoff_weight) %>% summarize(mean_timestep=mean(timestep), HPDI(timestep))
 
