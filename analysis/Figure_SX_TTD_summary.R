@@ -3,6 +3,27 @@ library(ggpubr)
 
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
+
+#compare order of acquisition and production
+load(file="../model_outputs/Rda_files/df_GEN_equiv_payoffs_acq_prod.Rda")
+
+
+df = df_equiv_payoffs_acq_prod %>% mutate(delta=timestep_production_b - timestep_acquisition_b) %>% group_by(sim) %>% arrange(timestep_acquisition_b) %>% mutate(order_acquisition=row_number())
+df = df %>% group_by(sim) %>% arrange(timestep_production_b) %>% mutate(order_production=row_number()) %>% ungroup()
+
+df = df %>% ungroup() %>% group_by(sim, graph_type, NBDA_s_param, memory_window, EWA_soc_info_weight, EWA_recent_payoff_weight, EWA_tau, EWA_conformity) %>% summarize(TTD=max(timestep_acquisition_b), TTFP=max(timestep_production_b), avgdelta=mean(delta), manhattan_delay=sum(abs(delta)), manhattan_divergence=sum(abs(order_acquisition-order_production)), divergence = 1-sum(order_acquisition==order_production)/n())
+
+df = df %>% group_by(NBDA_s_param,EWA_soc_info_weight) %>% summarize(mean_TTD=mean(TTD), mean_div= mean(manhattan_divergence), mean_delay=mean(manhattan_delay))
+
+p1 = ggplot(df, aes(x=EWA_soc_info_weight,y=NBDA_s_param))+
+  geom_tile(aes(fill=mean_TTD))+
+  geom_text(aes(label=paste0("TTD: ",round(mean_TTD,2),"\nDiv: ",round(mean_div,2),"\nDelay: ", round(mean_delay,2) )))+
+  scale_fill_gradient2(low="blue",high="red", midpoint = 85.21, guide = F)+
+  labs(x="Social info. bias",y="Strength of social transmission",fill="Ratio")+
+  theme_classic()
+p1
+
+
 load(file="../concat_data/df_ABM_equiv.Rda")
 
 df_ABM_equiv_payoff = df_ABM_equiv_payoff %>% filter(conformity=="None")

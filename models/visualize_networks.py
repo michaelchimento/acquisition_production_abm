@@ -26,10 +26,10 @@ def generate_network(graph_type,N):
 
 class ImportNetworkxGraph(Scene):
     def construct(self):
-        graph_type = "random_small_world"
+        graph_type = "random_erdos"
         N=24
         G = generate_network(graph_type,N)
-        g = Graph.from_networkx(G, layout="circular", layout_scale=2, labels=False, vertex_config={"color": BLACK, "radius": 0.1}, edge_config={"color": GREY, "stroke_width": 1})
+        g = Graph.from_networkx(G, layout="spring", layout_scale=2, labels=False, vertex_config={"color": BLACK, "radius": 0.1}, edge_config={"color": GREY, "stroke_width": 1})
         #a = Text("Random Regular", line_spacing=1)
         self.add(g)
 

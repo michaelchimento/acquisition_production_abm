@@ -14,7 +14,7 @@ fun_range <- function(x) {                              # Create user-defined fu
   (x - min(x)) / (max(x) - min(x))
 }
 
-df = df_ABM_equiv_payoff %>% filter(EWA_soc_info_weight=="medium", EWA_recent_payoff_weight=="medium", EWA_conformity==1, EWA_tau=="non-conservative")
+df = df_ABM_equiv_payoff %>% filter(graph_type=="random regular", EWA_soc_info_weight=="medium", EWA_recent_payoff_weight=="medium", EWA_conformity==1, EWA_tau=="non-conservative", NBDA_s_param==5, memory_window==10)
 
 df = df %>%
   group_by(sim)%>%
@@ -26,9 +26,10 @@ df = df %>% mutate(behavior_a=behavior_a/pop_size,behavior_b=behavior_b/pop_size
 df$name = factor(df$name, levels=c("num_know_novel","num_produced_b","behavior_a","behavior_b"))
 
 p1 = ggplot(df, aes(x=scaled_time, color=name))+
-  stat_summary_bin(aes(y=value), size=1, geom="errorbar", fun.data="mean_cl_boot", bins=15)+
-  stat_summary_bin(aes(y=value), size=2, geom="point", bins=15)+
-  stat_summary_bin(aes(y=value), size=1, geom="line", bins=15)+
+  #stat_smooth(aes(y=value),alpha=0.5)+
+  stat_summary_bin(aes(y=value), size=1, geom="errorbar", fun.data="mean_cl_boot", bins=10)+
+  stat_summary_bin(aes(y=value), size=2, geom="point", bins=10)+
+  stat_summary_bin(aes(y=value), size=1, geom="line", bins=10)+
   scale_y_continuous(limits=c(0,1))+
   labs(x="Scaled time",y="Proportion",color="")+
   scale_color_manual(values=c("black","gray","#5FD84F","#007C76"), labels=c("know novel","produced first novel","freq. established","freq. novel"), drop=FALSE)+
@@ -38,49 +39,11 @@ p1
 #compare order of acquisition and production
 load(file="../model_outputs/Rda_files/df_GEN_equiv_payoffs_acq_prod.Rda")
 
-df_equiv_payoffs_acq_prod %>%
-  group_by(sim)%>%
-  filter(timestep_acquisition_b==max(timestep_acquisition_b)) %>%
-  ungroup() %>%
-  summarize(mean(timestep_acquisition_b), HPDI(timestep_acquisition_b))
-
-df_equiv_payoffs_acq_prod %>%
-  group_by(sim)%>%
-  filter(timestep_production_b==max(timestep_production_b)) %>%
-  ungroup() %>%
-  summarize(mean(timestep_production_b), HPDI(timestep_production_b))
-
-df_equiv_payoffs_acq_prod %>%
-  filter(EWA_soc_info_weight=="medium", EWA_recent_payoff_weight=="medium", EWA_conformity==1, EWA_tau=="non-conservative",memory_window==20) %>%
-  group_by(sim)%>%
-  filter(timestep_acquisition_b==max(timestep_acquisition_b)) %>%
-  ungroup() %>%
-  group_by(NBDA_s_param) %>%
-  summarize(mean(timestep_acquisition_b), HPDI(timestep_acquisition_b))
-
-df_equiv_payoffs_acq_prod %>%
-  filter(EWA_soc_info_weight=="medium", EWA_recent_payoff_weight=="medium", EWA_conformity==1, EWA_tau=="non-conservative",memory_window==20) %>%
-  group_by(sim)%>%
-  filter(timestep_acquisition_b==max(timestep_acquisition_b)) %>%
-  ungroup() %>%
-  group_by(graph_type) %>%
-  summarize(mean(timestep_acquisition_b), HPDI(timestep_acquisition_b))
-
-df_equiv_payoffs_acq_prod %>%
-  group_by(sim)%>%
-  filter(timestep_acquisition_b==max(timestep_acquisition_b)) %>%
-  ungroup() %>%
-  group_by(EWA_tau) %>%
-  summarize(mean(timestep_acquisition_b), HPDI(timestep_acquisition_b))
-84/54
-76/66
-
-summary(df_equiv_payoffs_acq_prod)
-
 
 df = df_equiv_payoffs_acq_prod %>% mutate(delta=timestep_production_b - timestep_acquisition_b) %>% group_by(sim) %>% arrange(timestep_acquisition_b) %>% mutate(order_acquisition=row_number())
-
 df = df %>% group_by(sim) %>% arrange(timestep_production_b) %>% mutate(order_production=row_number())
+
+#df = df %>% filter(graph_type=="random regular", EWA_soc_info_weight=="medium", EWA_recent_payoff_weight=="medium", EWA_conformity==1, EWA_tau=="non-conservative", NBDA_s_param==5, memory_window==10)
 
 p2= ggplot(df %>% group_by(order_production,order_acquisition) %>% mutate(count=n()), aes(x=order_acquisition,y=order_production, fill=count))+
   geom_tile() +
@@ -89,15 +52,16 @@ p2= ggplot(df %>% group_by(order_production,order_acquisition) %>% mutate(count=
   scale_x_continuous(breaks=c(1,4,8,12,16,20,24))+
   scale_y_continuous(breaks=c(1,4,8,12,16,20,24))+
   theme_classic()
-p2
+
+
 df_summary = df %>% group_by(order_acquisition,order_production) %>% summarize(mean_delta=mean(delta))
 
-p3= ggplot(df_summary, aes(x=order_acquisition,y=order_production, fill=mean_delta+1))+
+p3= ggplot(df_summary, aes(x=order_acquisition,y=order_production, fill=mean_delta))+
   geom_tile()+
   labs(x="Order of acquisition", y="Order of production", fill="Avg. delta")+
   scale_x_continuous(breaks=c(1,4,8,12,16,20,24))+
   scale_y_continuous(breaks=c(1,4,8,12,16,20,24))+
-  scale_fill_viridis_c(option="plasma", direction=-1, trans="log10",  end=0.8, breaks=c(1,10,30,80)) +
+  scale_fill_viridis_c(option="plasma", direction=-1,  end=0.8, breaks=c(0,25,50,80)) +
   theme_classic()
 p3
 
