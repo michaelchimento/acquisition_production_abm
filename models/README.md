@@ -7,7 +7,7 @@ Models that generated data upon which the inferential EWA analysis was done need
 Running any of these scripts will generate one CSV per simulation, all of which are concatenated into one CSV after all simulations have completed.
 
 ## Contents
-Directory  | Description
+File  | Description
 ------------- | -------------
 ```EWA_recoverable_heterogeneous_asocial.py``` | the novel behaviour spreads through asocial learning
 ```EWA_recoverable_heterogeneous_social.py``` | the novel behaviour spreads through social transmission
