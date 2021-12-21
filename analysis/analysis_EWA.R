@@ -85,6 +85,8 @@ save(df_vanilla,file="../model_outputs/Rda_files/df_homogeneous_inference.Rda")
 load("../model_outputs/Rda_files/EWA_heterogeneous_social_agents.Rda")
 
 df_EWA %>% group_by(sim) %>% summarize(max = max(timestep))
+d = df_EWA %>% group_by(sim) %>% summarize(max = max(timestep))
+mean(d$max)
 
 df_EWA = df_EWA %>%
   arrange(sim,agent,timestep) %>%

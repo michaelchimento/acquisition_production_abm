@@ -4,13 +4,12 @@ library(ggridges)
 library(grid)
 
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
-
-####make diffusion charts
 load(file="../model_outputs/Rda_files/df_GEN_equiv_payoff.Rda")
 
+#Panel A: diffusion chart with margin density plot
 df_ABM_equiv_payoff = df_ABM_equiv_payoff %>% filter(graph_type=="random regular",EWA_conformity==1, EWA_recent_payoff_weight=="medium", EWA_tau=="non-conservative", NBDA_s_param==5,memory_window==10) %>% mutate(timestep=timestep+1)
 
-end_point = max(df_ABM_equiv_payoff$timestep)
+end_point = max(df_ABM_equiv_payoff$timestep) - 45
 
 df = df_ABM_equiv_payoff %>%
   group_by(sim)%>%
@@ -38,30 +37,23 @@ p1b = ggplot(df, aes(x=timestep,y=num_know_novel,color=as.factor(EWA_soc_info_we
   scale_y_continuous(limits=c(0,1))+
   labs(x="Time",y="Prop. knowledgable",color="Social info bias")+
   theme_classic()
-p1b
 g1 = ggarrange(p1a,p1b,ncol=1,nrow=2,heights=c(1,4),legend = "right",align="v",common.legend = T, labels=c("A"))
 
-#compare avg delta between order of acquisition and production for SIGMA
+#Panel B: compare avg delta between order of acquisition and production for SIGMA
 load(file="../model_outputs/Rda_files/df_GEN_equiv_payoffs_acq_prod.Rda")
 df = df_equiv_payoffs_acq_prod %>% filter() %>% group_by(sim) %>% arrange(timestep_acquisition_b) %>% mutate(order_acquisition=row_number())
-
 df = df %>% group_by(sim) %>% arrange(timestep_production_b) %>% mutate(order_production=row_number())
-
 df = df %>% ungroup() %>% mutate(delta=timestep_production_b- timestep_acquisition_b)
+df_summary = df %>% group_by(order_acquisition,order_production, EWA_soc_info_weight) %>% summarize(mean_delay=mean(delta))
 
-df_summary = df %>% group_by(sim,order_acquisition,order_production, EWA_soc_info_weight) %>% summarize(manhattan_delta=sum(delta))
-summary(df_summary)
-df_summary = df_summary %>% ungroup() %>% group_by(order_acquisition,order_production, EWA_soc_info_weight) %>% summarize(mean_delta=mean(manhattan_delta))
-
-p2= ggplot(df_summary, aes(x=order_acquisition,y=order_production, fill=mean_delta+1))+
+p2= ggplot(df_summary, aes(x=order_acquisition,y=order_production, fill=mean_delay))+
   facet_wrap(~EWA_soc_info_weight)+
   geom_tile()+
-  labs(x="Order of acquisition", y="Order of production", fill="Avg. delay score")+
-  scale_fill_viridis_c(option="plasma",trans="log10", direction=-1) +
+  labs(x="Order of acquisition", y="Order of production", fill="Avg. delay")+
+  scale_fill_viridis_c(option="plasma", trans="sqrt",  direction=-1) +
   scale_x_continuous(breaks=c(1,4,8,12,16,20,24))+
   scale_y_continuous(breaks=c(1,4,8,12,16,20,24))+
   theme_classic()
-p2
-ggarrange(g1,p2,nrow=2, labels=c("","B"))
 
+ggarrange(g1,p2,nrow=2, labels=c("","B"))
 ggsave(file="../output/Fig_4_sigma.png",width=12,height=10,scale=2,units="cm")

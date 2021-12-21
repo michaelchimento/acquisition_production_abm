@@ -4,9 +4,7 @@ library(ggridges)
 library(latex2exp)
 library(rethinking)
 
-
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
-
 
 load("../model_outputs/Rda_files/df_homogeneous_inference.Rda")
 
@@ -67,6 +65,4 @@ p3 = ggplot(data=df)+
 
 g1 = ggarrange(p1,p2,p3, ncol=1, align = "v", common.legend = T)
 
-g1
-
-ggsave("../output/fig_SX_EWA_inference.png", width=16,height=20, scale=2,units="cm")
+ggsave("../output/fig_S7_EWA_inference.png", width=16,height=20, scale=2,units="cm")

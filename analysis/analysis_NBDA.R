@@ -17,6 +17,7 @@ pop_size = max(df$agent+1)
 
 #Read in the csv file containing the social network, converting it to a matrix
 for (i in unique(df$sim)) {
+  i=1
   print(i)
   edgelist <- read.table(paste0("../model_outputs/csvs_raw/adjlists_data/NBDA_social_binary/adjlist_sim_",i,".txt"))
   edgelist=edgelist[1:2]+1
@@ -42,12 +43,8 @@ for (i in unique(df$sim)) {
   sim=i
 
   est_s = model_social@outputPar[2]
-  s_CI_lower = 0  #profLikCI(which=1,model=model_social,lowerRange=c(0,5),upperRange=c(5,10))[1]
-  s_CI_upper = 0 # profLikCI(which=1,model=model_social,lowerRange=c(0,5),upperRange=c(5,10))[2]
 
   est_rate = 1/model_social@outputPar[1]
-  rate_CI_upper = 0 #profLikCI(which=0,model=model_social,lowerRange=c(0,1000),upperRange = c(1000,2000))[1]
-  rate_CI_lower = 0 #profLikCI(which=0,model=model_social,lowerRange=c(0,1000),upperRange = c(1000,2000))[2]
 
   aicc_social = model_social@aicc
   aicc_asocial = model_asocial@aicc

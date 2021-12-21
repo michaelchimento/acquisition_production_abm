@@ -6,7 +6,6 @@ library(grid)
 
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
-#load networkviz
 rr = image_read("../output/network_diagrams/Random_regular.png")
 rr = rr %>% image_quantize(colorspace = 'gray')
 rr = rasterGrob(rr,height=1)
@@ -21,5 +20,5 @@ ba = ba %>% image_quantize(colorspace = 'gray')
 ba = rasterGrob(ba,height=1)
 
 g1 = ggarrange(rr,sw,er,ba, nrow=1, labels=c("random regular", "small world", "Erdos-Renyi","Barabasi-Albert"))
-g1
-ggsave(file="../output/fig2_networkviz.png",width=16,height=4,scale=2.1,units="cm")
+
+ggsave(file="../output/Fig_S1_networkviz.png",width=16,height=4,scale=2.1,units="cm")

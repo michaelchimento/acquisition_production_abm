@@ -13,7 +13,7 @@ from os import listdir,cpu_count,remove
 import time
 from scipy.special import logsumexp
 #replace with file of params you'd like to sim
-from paramlist_GENERATIVE_fullweights import *
+from paramlist_GENERATIVE_equiv_payoffs import *
 
 #define the class behavior
 class behavior:

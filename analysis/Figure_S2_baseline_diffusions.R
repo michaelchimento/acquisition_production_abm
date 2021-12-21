@@ -61,7 +61,7 @@ p2 = ggplot(df %>% filter(), aes(x=scaled_time, color=name))+
 
 
 ggarrange(p1,p2,labels=LETTERS[1:2], common.legend = T,legend="right")
-ggsave("../output/Fig_SX_baseline_diffusions.png",height=5,width=14,scale=2,units="cm")
+ggsave("../output/Fig_S2_baseline_diffusions.png",height=5,width=14,scale=2,units="cm")
 
 
 #### metrics ####

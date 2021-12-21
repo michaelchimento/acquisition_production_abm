@@ -2,7 +2,6 @@ library(tidyverse)
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 directory = "../model_outputs/csvs_concat/"
 
-
 ####BASELINE production timestep data####
 df_baseline_P = read.csv(paste(directory,"BASELINE_production_timestep_data.csv",sep=""))
 df_baseline_P = df_baseline_P %>% mutate(prop_b=(behavior_b/(behavior_a+behavior_b)))
@@ -278,6 +277,15 @@ save(df_EWA, file="../model_outputs/Rda_files/EWA_heterogeneous_social_agents.Rd
 #### EWA inference Heterogeneous: asocial learning condition ####
 df_EWA = read.csv(paste(directory,"EWA_heterogeneous_asocial_agents.csv",sep="")) %>% arrange(sim)
 save(df_EWA, file="../model_outputs/Rda_files/EWA_heterogeneous_asocial_agents.Rda")
+
+#### EWA inference social short diffusion ####
+df_EWA = read.csv(paste(directory,"EWA_heterogeneous_social_agents_shortdiffusion.csv",sep="")) %>% arrange(sim)
+save(df_EWA, file="../model_outputs/Rda_files/EWA_heterogeneous_social_agents_short.Rda")
+
+#### EWA inference asocial short diffusion ####
+df_EWA = read.csv(paste(directory,"EWA_heterogeneous_asocial_agents_shortdiffusion.csv",sep="")) %>% arrange(sim)
+save(df_EWA, file="../model_outputs/Rda_files/EWA_heterogeneous_asocial_agents_short.Rda")
+
 
 
 

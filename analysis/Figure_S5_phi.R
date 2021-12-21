@@ -6,9 +6,9 @@ library(ggridges)
 library(grid)
 
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
-
-####make diffusion charts
 load(file="../model_outputs/Rda_files/df_GEN_equiv_payoff.Rda")
+
+#Panel A: diffusion for AT(0)_a=0
 df_ABM_equiv_payoff = df_ABM_equiv_payoff %>% filter(graph_type=="random regular" ,NBDA_s_param==5, memory_window==10, EWA_soc_info_weight=="medium", EWA_tau=="non-conservative", EWA_conformity==1) %>% mutate(timestep=timestep+1)
 end_point = max(df_ABM_equiv_payoff$timestep)
 
@@ -26,7 +26,7 @@ p1a = ggplot(df %>% group_by(sim) %>% filter(full_diffusion==T) %>% slice(head=1
   coord_trans(x = "sqrt")+
   labs(x="Time",y="Prop. knowledgable",color="Recent experience bias")+
   theme_void()
-p1a
+
 p1b = ggplot(df, aes(x=timestep,y=num_know_novel,color=as.factor(EWA_recent_payoff_weight)))+
   geom_line(aes(group=sim),alpha=0.05)+
   stat_summary(size=1, fun = mean, geom=c("line"))+
@@ -39,9 +39,8 @@ p1b = ggplot(df, aes(x=timestep,y=num_know_novel,color=as.factor(EWA_recent_payo
   labs(x="Time",y="Prop. knowledgable",color="Recent experience bias")+
   theme_classic()
 
-p1b
 
-#load in dataframe with full values on initialization
+#Panel B: diffusion for AT(0)_a=1
 load(file="../model_outputs/Rda_files/df_fullweight.Rda")
 summary(df_ABM_fullweight)
 df_ABM_fullweight = df_ABM_fullweight %>% filter(graph_type=="random regular" ,NBDA_s_param==10, memory_window==20, EWA_soc_info_weight=="medium", EWA_tau=="non-conservative", EWA_conformity==1) %>% mutate(timestep=timestep+1)
@@ -61,7 +60,6 @@ p2a = ggplot(df %>% group_by(sim) %>% filter(full_diffusion==T) %>% slice(head=1
   coord_trans(x = "sqrt")+
   labs(x="Time",y="Prop. knowledgable",color="Recent experience bias")+
   theme_void()
-p2a
 p2b = ggplot(df, aes(x=timestep,y=num_know_novel,color=as.factor(EWA_recent_payoff_weight)))+
   geom_line(aes(group=sim),alpha=0.01)+
   stat_summary(size=1, fun = mean, geom=c("line"))+
@@ -74,10 +72,9 @@ p2b = ggplot(df, aes(x=timestep,y=num_know_novel,color=as.factor(EWA_recent_payo
   labs(x="Time",y="Prop. knowledgable",color="Recent experience bias")+
   theme_classic()
 
-
 g2 = ggarrange(p1a,p2a,p1b,p2b, ncol=2,nrow=2, heights=c(1,4), legend = "top",align="v", common.legend = T, labels=c("A","B","",""))
 
-ggsave(g2, file="../output/Fig_5_phi.png",width=12,height=6,scale=2,units="cm")
+ggsave(g2, file="../output/Fig_S5_phi.png",width=12,height=6,scale=2,units="cm")
 
 library(rethinking)
 df_ABM_fullweight %>% filter(full_diffusion==T) %>% group_by(sim) %>% slice(head=1) %>% ungroup() %>% group_by(EWA_recent_payoff_weight) %>% summarize(mean_timestep=mean(timestep), HPDI(timestep))

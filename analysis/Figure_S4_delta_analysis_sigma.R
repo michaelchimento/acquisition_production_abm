@@ -30,4 +30,4 @@ p3=ggplot(df, aes(x=order_production,y=delta,color=EWA_soc_info_weight))+
 
 ggarrange(p1,p2,p3, labels = c("A","B","C"), common.legend = T, nrow=1)
 
-ggsave("../output/FigS2_simga_delta.png",scale=2,width=12,height=5,units="cm")
+ggsave("../output/Fig_S4_simga_delta.png",scale=2,width=12,height=5,units="cm")
