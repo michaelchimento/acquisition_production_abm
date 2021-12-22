@@ -3,7 +3,7 @@ library(tidyverse)
 library(kableExtra)
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
-load(file="../model_outputs/Rda_files/NBDA_figure_data_proportional.Rda")
+load(file="../model_outputs/Rda_files/df_NBDA_figure_data_proportional.Rda")
 df$diffusion = factor(df$diffusion, levels=c("social diffusion","asocial diffusion"))
 df_reality = df %>% filter(feeder_data=="first production")
 summary(df_reality)

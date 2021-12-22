@@ -2,7 +2,7 @@ library(tidyverse)
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 directory = "../model_outputs/csvs_concat/"
 
-####BASELINE production timestep data####
+#### BASELINE production timestep data####
 df_baseline_P = read.csv(paste(directory,"BASELINE_production_timestep_data.csv",sep=""))
 df_baseline_P = df_baseline_P %>% mutate(prop_b=(behavior_b/(behavior_a+behavior_b)))
 #df_baseline_P = df_baseline_P %>% mutate(conformity = paste("NBDA conf.",NBDA_conformity,"EWA conf.",EWA_conformity))
@@ -23,10 +23,10 @@ levels(df_baseline_P$EWA_recent_payoff_weight) = c("weak","medium","strong")
 df_baseline_P$graph_type <- factor(df_baseline_P$graph_type, levels=c('random_regular','random_small_world', 'random_erdos', 'random_barabasi'))
 levels(df_baseline_P$graph_type) = c('random regular', 'small world', 'Erdos-Renyi',"Barabasi-Albert")
 #df_baseline_P = df_baseline_P %>% select(!c(behavior_a_A_mat,behavior_a_I_mat,behavior_a_S_mat,behavior_a_P_mat, behavior_b_A_mat,behavior_b_I_mat,behavior_b_P_mat,behavior_b_S_mat))
-save(df_baseline_P,file="../model_outputs/Rda_files/df_baseline_P_preprogrammed.Rda")
+save(df_baseline_P,file="../model_outputs/Rda_files/df_baseline_P.Rda")
 remove(df_baseline_P)
 
-####BASELINE Production acquisition / production ####
+#### BASELINE Production acquisition / production ####
 df_baseline_p_acq_prod = read.csv(paste(directory,"BASELINE_production_acq_prod.csv",sep=""))
 summary(df_baseline_p_acq_prod)
 #df_baseline_p_acq_prod = df_baseline_p_acq_prod %>% mutate(conformity = paste("NBDA conf.",NBDA_conformity,"EWA conf.",EWA_conformity))
@@ -45,11 +45,11 @@ df_baseline_p_acq_prod$graph_type <- factor(df_baseline_p_acq_prod$graph_type, l
 levels(df_baseline_p_acq_prod$graph_type) = c('random regular', 'small world', 'Erdos-Renyi',"Barabasi-Albert")
 summary(df_baseline_p_acq_prod)
 df_baseline_p_acq_prod = df_baseline_p_acq_prod %>% mutate(NBDA_zjt_type=as.factor(NBDA_zjt_type))
-save(df_baseline_p_acq_prod,file="../model_outputs/Rda_files/df_baseline_p_acq_prod_preprogrammed.Rda")
+save(df_baseline_p_acq_prod,file="../model_outputs/Rda_files/df_baseline_p_acq_prod.Rda")
 remove(df_baseline_p_acq_prod)
 
 
-####BASELINE transmission timestep data ####
+#### BASELINE transmission timestep data ####
 df_baseline_T = read.csv(paste(directory,"BASELINE_transmission_timestep_data.csv",sep=""))
 df_baseline_T = df_baseline_T %>% mutate(prop_b=(behavior_b/(behavior_a+behavior_b)))
 #df_baseline_T = df_baseline_T %>% mutate(conformity = paste("NBDA conf.",NBDA_conformity,"EWA conf.",EWA_conformity))
@@ -73,7 +73,7 @@ levels(df_baseline_T$graph_type) = c('random regular', 'small world', 'Erdos-Ren
 save(df_baseline_T,file="../model_outputs/Rda_files/df_baseline_T.Rda")
 remove(df_baseline_T)
 
-####BASELINE transmission acquisition / production ####
+#### BASELINE transmission acquisition / production ####
 df_baseline_t_acq_prod = read.csv(paste(directory,"BASELINE_transmission_acq_prod.csv",sep=""))
 summary(df_baseline_t_acq_prod)
 #df_baseline_t_acq_prod = df_baseline_t_acq_prod %>% mutate(conformity = paste("NBDA conf.",NBDA_conformity,"EWA conf.",EWA_conformity))
@@ -96,7 +96,7 @@ save(df_baseline_t_acq_prod,file="../model_outputs/Rda_files/df_baseline_t_acq_p
 remove(df_baseline_t_acq_prod)
 
 
-####GENERATIVE timestep data equivalent payoffs ####
+#### GENERATIVE timestep data equivalent payoffs ####
 df_ABM_equiv_payoff = read.csv(paste(directory,"GENERATIVE_equiv_payoffs_timestep_data.csv",sep=""))
 df_ABM_equiv_payoff = df_ABM_equiv_payoff %>% mutate(prop_b=(behavior_b/(behavior_a+behavior_b)))
 #df_ABM_equiv_payoff = df_ABM_equiv_payoff %>% mutate(conformity = paste("NBDA conf.",NBDA_conformity,"EWA conf.",EWA_conformity))
@@ -123,7 +123,7 @@ save(df_ABM_equiv_payoff,file="../model_outputs/Rda_files/df_GEN_equiv_payoff.Rd
 remove(df_ABM_equiv_payoff)
 
 
-####GENERATIVE Equivalent payoff acquisition / production ####
+#### GENERATIVE Equivalent payoff acquisition / production ####
 df_equiv_payoffs_acq_prod = read.csv(paste(directory,"GENERATIVE_equiv_payoffs_acq_prod.csv",sep=""))
 
 #df_equiv_payoffs_acq_prod = df_equiv_payoffs_acq_prod %>% mutate(conformity = paste("NBDA conf.",NBDA_conformity,"EWA conf.",EWA_conformity))
@@ -145,7 +145,7 @@ df_equiv_payoffs_acq_prod = df_equiv_payoffs_acq_prod %>% mutate(NBDA_zjt_type=a
 save(df_equiv_payoffs_acq_prod,file="../model_outputs/Rda_files/df_GEN_equiv_payoffs_acq_prod.Rda")
 remove(df_equiv_payoffs_acq_prod)
 
-####GENERATIVE fullweight equivalent payoffs ####
+#### GENERATIVE fullweight equivalent payoffs ####
 df_ABM_fullweight = read.csv(paste(directory,"GENERATIVE_fullweights_timestep_data.csv",sep=""))
 df_ABM_fullweight = df_ABM_fullweight %>% mutate(prop_b=(behavior_b/(behavior_a+behavior_b)))
 #df_ABM_fullweight = df_ABM_fullweight %>% mutate(conformity = paste("NBDA conf.",NBDA_conformity,"EWA conf.",EWA_conformity))
@@ -168,10 +168,10 @@ df_ABM_fullweight$graph_type <- factor(df_ABM_fullweight$graph_type, levels=c('r
 levels(df_ABM_fullweight$graph_type) = c('random regular')
 
 df_ABM_fullweight = df_ABM_fullweight %>% select(!c(behavior_a_A_mat,behavior_a_I_mat,behavior_a_S_mat,behavior_a_P_mat, behavior_b_A_mat,behavior_b_I_mat,behavior_b_P_mat,behavior_b_S_mat))
-save(df_ABM_fullweight,file="../model_outputs/Rda_files/df_fullweight.Rda")
+save(df_ABM_fullweight,file="../model_outputs/Rda_files/df_GEN_fullweight.Rda")
 remove(df_ABM_fullweight)
 
-####GENERATIVE fullweight acquisition / production ####
+#### GENERATIVE fullweight acquisition / production ####
 df_fullweight_acq_prod = read.csv(paste(directory,"GENERATIVE_fullweights_acq_prod.csv",sep=""))
 #df_fullweight_acq_prod = df_fullweight_acq_prod %>% mutate(conformity = paste("NBDA conf.",NBDA_conformity,"EWA conf.",EWA_conformity))
 #df_fullweight_acq_prod$conformity = as.factor(df_fullweight_acq_prod$conformity)
@@ -268,74 +268,12 @@ remove(df_NBDA_AP)
 
 #### EWA inference homogeneous condition ####
 df_EWA = read.csv(paste(directory,"EWA_homogeneous_agents.csv",sep="")) %>% arrange(sim)
-save(df_EWA, file="../model_outputs/Rda_files/EWA_homogeneous_agents.Rda")
+save(df_EWA, file="../model_outputs/Rda_files/df_EWA_homogeneous_agents.Rda")
 
 #### EWA inference Heterogeneous: social learning condition ####
 df_EWA = read.csv(paste(directory,"EWA_heterogeneous_social_agents.csv",sep="")) %>% arrange(sim)
-save(df_EWA, file="../model_outputs/Rda_files/EWA_heterogeneous_social_agents.Rda")
+save(df_EWA, file="../model_outputs/Rda_files/df_EWA_heterogeneous_social_agents.Rda")
 
 #### EWA inference Heterogeneous: asocial learning condition ####
 df_EWA = read.csv(paste(directory,"EWA_heterogeneous_asocial_agents.csv",sep="")) %>% arrange(sim)
-save(df_EWA, file="../model_outputs/Rda_files/EWA_heterogeneous_asocial_agents.Rda")
-
-#### EWA inference social short diffusion ####
-df_EWA = read.csv(paste(directory,"EWA_heterogeneous_social_agents_shortdiffusion.csv",sep="")) %>% arrange(sim)
-save(df_EWA, file="../model_outputs/Rda_files/EWA_heterogeneous_social_agents_short.Rda")
-
-#### EWA inference asocial short diffusion ####
-df_EWA = read.csv(paste(directory,"EWA_heterogeneous_asocial_agents_shortdiffusion.csv",sep="")) %>% arrange(sim)
-save(df_EWA, file="../model_outputs/Rda_files/EWA_heterogeneous_asocial_agents_short.Rda")
-
-
-
-
-####GENERATIVE timestep data conformity ####
-df_ABM_conformity = read.csv(paste(directory,"GENERATIVE_memory_conformity_timestep_data.csv",sep=""))
-df_ABM_conformity = df_ABM_conformity %>% mutate(prop_b=(behavior_b/(behavior_a+behavior_b)))
-df_ABM_conformity = df_ABM_conformity %>% mutate(conformity = paste("NBDA conf.",NBDA_conformity,"EWA conf.",EWA_conformity))
-summary(df_ABM_conformity)
-df_ABM_conformity$conformity = as.factor(df_ABM_conformity$conformity)
-levels(df_ABM_conformity$conformity) = c("None","Production","Transmission","Production & Transmission")
-df_ABM_conformity = df_ABM_conformity %>%
-  mutate(full_diffusion=ifelse(num_know_novel==max(pop_size), TRUE, FALSE),
-         full_first_prod=ifelse(num_produced_b==max(pop_size), TRUE, FALSE),
-         num_know_novel=num_know_novel/max(pop_size),
-         EWA_recent_payoff_weight = as.factor(EWA_recent_payoff_weight),
-         EWA_soc_info_weight = as.factor(EWA_soc_info_weight),
-         EWA_tau = as.factor(EWA_tau),
-         graph_type = as.factor(graph_type))
-
-levels(df_ABM_conformity$EWA_soc_info_weight) = c("medium")
-levels(df_ABM_conformity$EWA_tau) = c("non-conservative")
-levels(df_ABM_conformity$EWA_recent_payoff_weight) = c("medium")
-df_ABM_conformity$graph_type <- factor(df_ABM_conformity$graph_type, levels=c('random_regular','random_small_world', 'random_erdos', 'random_barabasi'))
-levels(df_ABM_conformity$graph_type) = c('random regular', 'small world', 'Erdos-Renyi',"Barabasi-Albert")
-
-df_ABM_conformity = df_ABM_conformity %>% select(!c(behavior_a_A_mat,behavior_a_I_mat,behavior_a_S_mat,behavior_a_P_mat, behavior_b_A_mat,behavior_b_I_mat,behavior_b_P_mat,behavior_b_S_mat))
-
-save(df_ABM_conformity,file="../model_outputs/Rda_files/df_GEN_memory_conformity.Rda")
-remove(df_ABM_conformity)
-
-
-####GENERATIVE acquisition production CONFORMITY ####
-df_conf_acq_prod = read.csv(paste(directory,"GENERATIVE_memory_conformity_acq_prod.csv",sep=""))
-
-df_conf_acq_prod = df_conf_acq_prod %>% mutate(conformity = paste("NBDA conf.",NBDA_conformity,"EWA conf.",EWA_conformity))
-df_conf_acq_prod$conformity = as.factor(df_conf_acq_prod$conformity)
-levels(df_conf_acq_prod$conformity) = c("None","Production","Transmission","Production & Transmission")
-df_conf_acq_prod = df_conf_acq_prod %>%
-  mutate(EWA_recent_payoff_weight = as.factor(EWA_recent_payoff_weight),
-         EWA_soc_info_weight = as.factor(EWA_soc_info_weight),
-         graph_type = as.factor(graph_type))
-
-levels(df_conf_acq_prod$EWA_soc_info_weight) = c("medium")
-levels(df_conf_acq_prod$EWA_recent_payoff_weight) = c("medium")
-df_conf_acq_prod$graph_type <- factor(df_conf_acq_prod$graph_type, levels=c('random_regular','random_small_world', 'random_erdos', 'random_barabasi'))
-levels(df_conf_acq_prod$graph_type) = c('random regular', 'small world', 'Erdos-Renyi',"Barabasi-Albert")
-summary(df_conf_acq_prod)
-df_conf_acq_prod = df_conf_acq_prod %>% mutate(NBDA_zjt_type=as.factor(NBDA_zjt_type))
-save(df_conf_acq_prod,file="../model_outputs/Rda_files/df_GEN_memory_conformity_acq_prod.Rda")
-remove(df_conf_acq_prod)
-
-
-
+save(df_EWA, file="../model_outputs/Rda_files/df_EWA_heterogeneous_asocial_agents.Rda")

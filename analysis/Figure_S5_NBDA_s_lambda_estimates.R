@@ -4,7 +4,7 @@ library(ggpubr)
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
 
-load(file="../model_outputs/Rda_files/NBDA_figure_data_binary.Rda")
+load(file="../model_outputs/Rda_files/df_NBDA_figure_data_binary.Rda")
 df = df %>% mutate(support=aicc_asocial-aicc_social)
 summary(df)
 p1=ggplot(df %>% filter(feeder_data=="acquisition", diffusion=="social diffusion"), aes(x=est_s,y=est_rate))+
@@ -26,7 +26,7 @@ p2=ggplot(df %>% filter(feeder_data=="acquisition", diffusion=="asocial diffusio
   labs(x="Estimated s", y="Estimated base rate", title="Asocial diffusion (idealized data)", color="support\nsocial")+
   theme_classic()
 
-load(file="../model_outputs/Rda_files/NBDA_figure_data_proportional.Rda")
+load(file="../model_outputs/Rda_files/df_NBDA_figure_data_proportional.Rda")
 df = df %>% mutate(support=aicc_asocial-aicc_social)
 summary(df)
 p3=ggplot(df %>% filter(feeder_data=="first production", diffusion=="social diffusion"), aes(x=est_s,y=est_rate))+
@@ -50,5 +50,5 @@ p4=ggplot(df %>% filter(feeder_data=="first production", diffusion=="asocial dif
   theme_classic()
 
 ggarrange(p1,p2,p3,p4, labels=c("A","B","C","D"), common.legend = T, legend = "right")
-ggsave("../output/Fig_S6_NBDA_s_lambda.png", width=12,height=10,scale=2,units="cm")
+ggsave("../output/Fig_S5_NBDA_s_lambda.png", width=12,height=10,scale=2,units="cm")
 

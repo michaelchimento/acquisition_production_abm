@@ -43,8 +43,12 @@ for (i in unique(df$sim)) {
   sim=i
 
   est_s = model_social@outputPar[2]
+  s_CI_lower = 0  #profLikCI(which=1,model=model_social,lowerRange=c(0,5),upperRange=c(5,10))[1]
+  s_CI_upper = 0 # profLikCI(which=1,model=model_social,lowerRange=c(0,5),upperRange=c(5,10))[2]
 
   est_rate = 1/model_social@outputPar[1]
+  rate_CI_upper = 0 #profLikCI(which=0,model=model_social,lowerRange=c(0,1000),upperRange = c(1000,2000))[1]
+  rate_CI_lower = 0 #profLikCI(which=0,model=model_social,lowerRange=c(0,1000),upperRange = c(1000,2000))[2]
 
   aicc_social = model_social@aicc
   aicc_asocial = model_asocial@aicc
@@ -245,7 +249,7 @@ df_summary_AB_AC$diffusion="asocial diffusion"
 df_summary_AB_FP$diffusion="asocial diffusion"
 
 df = bind_rows(df_summary_AB_AC,df_summary_AB_FP,df_summary_SB_AC,df_summary_SB_FP)
-save(df,file="../model_outputs/Rda_files/NBDA_figure_data_binary.Rda")
+save(df,file="../model_outputs/Rda_files/df_NBDA_figure_data_binary.Rda")
 
 ####PROPORTIONAL SOCIAL DATA####
 load(file="../model_outputs/Rda_files/df_NBDA_SP.Rda")
@@ -477,4 +481,4 @@ df_summary_AP_AC$diffusion="asocial diffusion"
 df_summary_AP_FP$diffusion="asocial diffusion"
 
 df = bind_rows(df_summary_AP_AC,df_summary_AP_FP,df_summary_SP_AC,df_summary_SP_FP)
-save(df,file="../model_outputs/Rda_files/NBDA_figure_data_proportional.Rda")
+save(df,file="../model_outputs/Rda_files/df_NBDA_figure_data_proportional.Rda")

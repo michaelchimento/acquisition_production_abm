@@ -7,7 +7,7 @@ options(mc.cores = parallel::detectCores())
 
 
 ####Homogeneous condition ####
-load("../model_outputs/Rda_files/EWA_homogeneous_agents.Rda")
+load("../model_outputs/Rda_files/df_EWA_homogeneous_agents.Rda")
 df_EWA = df_EWA %>%
   arrange(sim,agent,timestep) %>%
   group_by(sim,agent) %>%
@@ -45,7 +45,7 @@ for (i in unique(df_EWA$grouping)){
 
   #fit model in stan
   fit <- stan( file = 'stan_code/stan_model_noRE_phisigma.stan', data = ds ,
-                     iter = 2500, warmup=1000, chains=5, cores=5, pars=parlist,
+                     iter = 2500, warmup=1000, chains=3, cores=3, pars=parlist,
                      control=list( adapt_delta=0.9 ))
 
   #assign(paste0("diagnostics",i),dashboard(fit))
@@ -79,10 +79,10 @@ for (i in unique(df_EWA$grouping)){
 
 data$sim = as.factor(data$sim)
 df_vanilla = data
-save(df_vanilla,file="../model_outputs/Rda_files/df_homogeneous_inference.Rda")
+save(df_vanilla,file="../model_outputs/Rda_files/df_EWA_posterior_homogeneous_inference.Rda")
 
 ####SOCIAL DIFFUSION####
-load("../model_outputs/Rda_files/EWA_heterogeneous_social_agents.Rda")
+load("../model_outputs/Rda_files/df_EWA_heterogeneous_social_agents.Rda")
 
 df_EWA %>% group_by(sim) %>% summarize(max = max(timestep))
 d = df_EWA %>% group_by(sim) %>% summarize(max = max(timestep))
@@ -125,7 +125,7 @@ for (i in unique(df_EWA$grouping)){
 
   #fit model in stan
   fit <- stan( file = 'stan_code/stan_model_noRE_phisigma.stan', data = ds ,
-               iter = 2500, warmup=1000, chains=5, cores=5, pars=parlist,
+               iter = 2500, warmup=1000, chains=3, cores=3, pars=parlist,
                control=list( adapt_delta=0.9 ))
 
   #assign(paste0("diagnostics",i),dashboard(fit))
@@ -159,12 +159,12 @@ for (i in unique(df_EWA$grouping)){
 
 data$sim = as.factor(data$sim)
 df_diffusion = data
-save(df_diffusion,file="../model_outputs/Rda_files/df_social_inference.Rda")
+save(df_diffusion,file="../model_outputs/Rda_files/df_EWA_posterior_social_inference.Rda")
 
 
 ####ASOCIAL DIFFUSION ####
 
-load("../model_outputs/Rda_files/EWA_heterogeneous_asocial_agents.Rda")
+load("../model_outputs/Rda_files/df_EWA_heterogeneous_asocial_agents.Rda")
 df_EWA %>% group_by(sim) %>% summarize(max = max(timestep))
 
 df_EWA = df_EWA %>%
@@ -204,7 +204,7 @@ for (i in unique(df_EWA$grouping)){
 
   #fit model in stan
   fit <- stan( file = 'stan_code/stan_model_noRE_phisigma.stan', data = ds ,
-               iter = 2500, warmup=1000, chains=5, cores=5, pars=parlist,
+               iter = 2500, warmup=1000, chains=3, cores=3, pars=parlist,
                control=list( adapt_delta=0.9 ))
 
   #assign(paste0("diagnostics",i),dashboard(fit))
@@ -238,4 +238,4 @@ for (i in unique(df_EWA$grouping)){
 
 data$sim = as.factor(data$sim)
 df_asocial_inference = data
-save(df_asocial_inference,file="../model_outputs/Rda_files/df_asocial_inference.Rda")
+save(df_asocial_inference,file="../model_outputs/Rda_files/df_EWA_posterior_asocial_inference.Rda")

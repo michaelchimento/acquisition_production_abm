@@ -1,5 +1,5 @@
 #Figure SX - Deltas for SIGMA
-load(file="../model_outputs/Rda_files/df_GEN_equiv_payoffs_acq_prod2.Rda")
+load(file="../model_outputs/Rda_files/df_GEN_equiv_payoffs_acq_prod.Rda")
 df = df_equiv_payoffs_acq_prod %>% filter(EWA_conformity==1, EWA_tau=="non-conservative", NBDA_s_param==5,memory_window==30) %>% mutate(delta=timestep_production_b - timestep_acquisition_b) %>% group_by(sim) %>% arrange(timestep_acquisition_b) %>% mutate(order_acquisition=row_number())
 df = df %>% group_by(sim) %>% arrange(timestep_production_b) %>% mutate(order_production=row_number())
 
@@ -30,4 +30,4 @@ p3=ggplot(df, aes(x=order_production,y=delta,color=EWA_soc_info_weight))+
 
 ggarrange(p1,p2,p3, labels = c("A","B","C"), common.legend = T, nrow=1)
 
-ggsave("../output/Fig_S4_simga_delta.png",scale=2,width=12,height=5,units="cm")
+ggsave("../output/Fig_S3_simga_delta.png",scale=2,width=12,height=5,units="cm")

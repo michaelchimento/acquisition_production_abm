@@ -5,9 +5,9 @@ library(rethinking)
 
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
-load("../model_outputs/Rda_files/df_homogeneous_inference.Rda")
-load("../model_outputs/Rda_files/df_social_inference.Rda")
-load("../model_outputs/Rda_files/df_asocial_inference.Rda")
+load("../model_outputs/Rda_files/df_EWA_posterior_homogeneous_inference.Rda")
+load("../model_outputs/Rda_files/df_EWA_posterior_social_inference.Rda")
+load("../model_outputs/Rda_files/df_EWA_posterior_asocial_inference.Rda")
 
 df_vanilla$type="a"
 df_diffusion$type="b"

@@ -6,8 +6,8 @@ library(rethinking)
 
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
-load("../model_outputs/Rda_files/df_homogeneous_inference.Rda")
-
+load("../model_outputs/Rda_files/df_EWA_posterior_homogeneous_inference.Rda")
+df_vanilla %>% group_by(sim) %>% summarize(n())
 df_vanilla$true_phi_name = as.factor(df_vanilla$true_phi)
 levels(df_vanilla$true_phi_name) = c("phi=0.25","phi=0.5","phi=0.75")
 df_vanilla$true_sigma_name = as.factor(df_vanilla$true_sigma)
@@ -25,7 +25,7 @@ p1 = ggplot(data=df)+
   labs(x="estimated parameter value", fill="posterior density", title="Homogeneous repertoires")+
   theme_classic()
 
-load("../model_outputs/Rda_files/df_social_inference.Rda")
+load("../model_outputs/Rda_files/df_EWA_posterior_social_inference.Rda")
 df_diffusion$true_phi_name = as.factor(df_diffusion$true_phi)
 levels(df_diffusion$true_phi_name) = c("phi=0.25","phi=0.5","phi=0.75")
 df_diffusion$true_sigma_name = as.factor(df_diffusion$true_sigma)
@@ -44,7 +44,7 @@ p2 = ggplot(data=df)+
   theme_classic()
 
 
-load("../model_outputs/Rda_files/df_asocial_inference.Rda")
+load("../model_outputs/Rda_files/df_EWA_posterior_asocial_inference.Rda")
 
 df_asocial_inference$true_phi_name = as.factor(df_asocial_inference$true_phi)
 levels(df_asocial_inference$true_phi_name) = c("phi=0.25","phi=0.5","phi=0.75")
@@ -64,5 +64,5 @@ p3 = ggplot(data=df)+
   theme_classic()
 
 g1 = ggarrange(p1,p2,p3, ncol=1, align = "v", common.legend = T)
-
-ggsave("../output/fig_S7_EWA_inference.png", width=16,height=20, scale=2,units="cm")
+g1
+ggsave("../output/Fig_S6_EWA_inference.png", width=16,height=20, scale=2,units="cm")

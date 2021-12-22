@@ -4,7 +4,7 @@ library(ggpubr)
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
 #Panel A: relative model support per condition
-load(file="../model_outputs/Rda_files/NBDA_figure_data_binary.Rda")
+load(file="../model_outputs/Rda_files/df_NBDA_figure_data_binary.Rda")
 df %>% ungroup() %>% filter(est_s<10,feeder_data=="acquisition")
 df$diffusion = factor(df$diffusion, levels=c("social diffusion","asocial diffusion"))
 levels(df$diffusion)[2] <- "asocial learning"
@@ -31,7 +31,7 @@ p1 = ggplot(df_combined,aes(x=diffusion,y=aicc_asocial-aicc_social))+
   theme_classic()
 
 #Panel B and C: delay and divergence correlates with type 1 and 2 errors
-load(file="../model_outputs/Rda_files/NBDA_figure_data_proportional.Rda")
+load(file="../model_outputs/Rda_files/df_NBDA_figure_data_proportional.Rda")
 df$diffusion = factor(df$diffusion, levels=c("social diffusion","asocial diffusion"))
 levels(df$diffusion)[2] <- "asocial learning"
 social_temp = df %>% ungroup() %>% filter(feeder_data=="first production", diffusion == "social diffusion") %>% mutate(correct_support=aicc_social<aicc_asocial)
@@ -67,7 +67,7 @@ p3 = ggplot(df_combined, aes(x=correct_support,y=manhattan_divergence))+
   theme_classic()
 
 ggarrange(p1,p2,p3,widths=c(1,1,1), labels=c("A","B", "C"), ncol=3)
-ggsave("../output/Fig_5_NBDA.png", width=15,height=6,scale=2,units="cm")
+ggsave("../output/Fig_4_NBDA.png", width=15,height=6,scale=2,units="cm")
 
 
 

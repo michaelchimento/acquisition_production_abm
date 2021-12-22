@@ -56,4 +56,4 @@ p2= ggplot(df_summary, aes(x=order_acquisition,y=order_production, fill=mean_del
   theme_classic()
 
 ggarrange(g1,p2,nrow=2, labels=c("","B"))
-ggsave(file="../output/Fig_4_sigma.png",width=12,height=10,scale=2,units="cm")
+ggsave(file="../output/Fig_3_sigma.png",width=12,height=10,scale=2,units="cm")
