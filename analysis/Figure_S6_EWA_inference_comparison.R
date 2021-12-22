@@ -1,6 +1,5 @@
 library(tidyverse)
 library(ggpubr)
-library(ggridges)
 library(latex2exp)
 library(rethinking)
 

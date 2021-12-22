@@ -1,6 +1,5 @@
 library(tidyverse)
 library(rethinking)
-library(ggridges)
 options(mc.cores = parallel::detectCores())
 
 #setwd(dirname(rstudioapi::getActiveDocumentContext()$path))

@@ -1,7 +1,5 @@
 library(tidyverse)
 library(ggpubr)
-library(ggridges)
-library(grid)
 
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 load(file="../model_outputs/Rda_files/df_GEN_equiv_payoff.Rda")

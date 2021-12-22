@@ -1,3 +1,6 @@
+library(tidyverse)
+library(ggpubr)
+
 #Figure SX - Deltas for SIGMA
 load(file="../model_outputs/Rda_files/df_GEN_equiv_payoffs_acq_prod.Rda")
 df = df_equiv_payoffs_acq_prod %>% filter(EWA_conformity==1, EWA_tau=="non-conservative", NBDA_s_param==5,memory_window==30) %>% mutate(delta=timestep_production_b - timestep_acquisition_b) %>% group_by(sim) %>% arrange(timestep_acquisition_b) %>% mutate(order_acquisition=row_number())

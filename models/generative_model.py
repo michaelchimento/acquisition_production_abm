@@ -38,8 +38,8 @@ class agent:
         self.long_social_memory = [] #records lists of lists, each sublist from a single timestep within the memory window
         self.naive = True # binary variable that flips to False once any behavior has been learned by the agent
         self.produced_b = False #binary variable that flips to True once the novel behavior has been performed.
-        self.time_acquired_b = -1
-        self.time_produced_b = -1
+        self.time_acquired_b = -1 #for debugging, this will change to the timestep agents acquired once it happens
+        self.time_produced_b = -1 #for debugging, this will change to the timestep agents produced novel first once it happens
 
         #EWA parameters
         self.sigma = params_list[0] #social information bias
