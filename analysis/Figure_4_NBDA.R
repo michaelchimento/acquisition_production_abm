@@ -5,19 +5,20 @@ setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
 #Panel A: relative model support per condition
 load(file="../model_outputs/Rda_files/df_NBDA_figure_data_binary.Rda")
-df %>% ungroup() %>% filter(est_s<10,feeder_data=="acquisition")
+summary(df)
 df$diffusion = factor(df$diffusion, levels=c("social diffusion","asocial diffusion"))
 levels(df$diffusion)[2] <- "asocial learning"
 df_sanity = df %>% filter(feeder_data=="acquisition")
 df_sanity$facet="Idealized data"
 
-load(file="../model_outputs/Rda_files/NBDA_figure_data_proportional.Rda")
+load(file="../model_outputs/Rda_files/df_NBDA_figure_data_proportional.Rda")
 df$diffusion = factor(df$diffusion, levels=c("social diffusion","asocial diffusion"))
 levels(df$diffusion)[2] <- "asocial learning"
 df_reality = df %>% filter(feeder_data=="first production")
 df_reality$facet="Realistic data"
 df_combined = bind_rows(df_sanity,df_reality)
 
+summary(df_combined)
 p1 = ggplot(df_combined,aes(x=diffusion,y=aicc_asocial-aicc_social))+
   facet_wrap(~facet)+
   geom_hline(yintercept = 0, linetype="dashed")+
@@ -25,10 +26,12 @@ p1 = ggplot(df_combined,aes(x=diffusion,y=aicc_asocial-aicc_social))+
   geom_jitter(alpha=0.4)+
   #geom_jitter(data= df_combined %>% filter(est_s>=10), color="blue", alpha=0.6)+
   #geom_jitter(data= df_combined %>% filter(est_s<10), aes(fill=est_s), alpha=1)+
-  scale_fill_gradient2(midpoint = 5)+
-  geom_boxplot(aes(fill=feeder_data), alpha=0.6, scale="width",outlier.alpha = 0)+
+  geom_boxplot(aes(fill=feeder_data), alpha=0.6,outlier.alpha = 0)+
   scale_fill_viridis_d(begin=0.5, guide=F)+
   theme_classic()
+
+library(rethinking)
+df_combined %>% group_by(facet,diffusion) %>% mutate(support_social=aicc_asocial-aicc_social) %>% summarize(mean(support_social),HPDI(support_social))
 
 #Panel B and C: delay and divergence correlates with type 1 and 2 errors
 load(file="../model_outputs/Rda_files/df_NBDA_figure_data_proportional.Rda")
