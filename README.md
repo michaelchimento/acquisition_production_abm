@@ -33,4 +33,7 @@ All analyses were performed using R v. 4.0.2 and Stan v. 2.27 using the followin
 - sna v. 2.6
 - tidyverse v. 1.3.0
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> b944fcb3f6c618e765d910dfac3206ee0920940e
