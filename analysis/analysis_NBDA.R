@@ -8,477 +8,426 @@ setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
 ####BINARY SOCIAL DATA####
 load(file="../model_outputs/Rda_files/df_NBDA_SB.Rda")
-df_ABM_acq_prod = df_NBDA_SB
-df = df_ABM_acq_prod %>% ungroup()
-temp <- data.frame(matrix(ncol = 9, nrow = 0))
+df = df_NBDA_SB %>% ungroup()
+temp <- data.frame(matrix(ncol = 7, nrow = 0))
 #provide column names
-colnames(temp) <- c('sim', 'est_s', 's_CI_lower', 's_CI_lower', 'est_rate', 'rate_CI_lower', 'rate_CI_upper', 'aicc_social', 'aicc_asocial')
+colnames(temp) <- c("data_type", "model_type", "sim", "est_s", "est_rate", "aicc_social", "aicc_asocial")
+
 pop_size = max(df$agent+1)
 
 #Read in the csv file containing the social network, converting it to a matrix
 for (i in unique(df$sim)) {
-  i=1
   print(i)
+  sim=i
   edgelist <- read.table(paste0("../model_outputs/csvs_raw/adjlists_data/NBDA_social_binary/adjlist_sim_",i,".txt"))
   edgelist=edgelist[1:2]+1
   edgelist=as.matrix(edgelist)
+
   G <- graph.edgelist(edgelist,directed=FALSE);
   socNet1 <- as_adjacency_matrix(G,type="both",names=TRUE,sparse=FALSE)
   socNet1<-array(socNet1,dim=c(pop_size,pop_size,1))
 
-  #get order of acquisition
-  oata = df %>% filter(sim==i) %>% arrange(timestep_acquisition_b) %>% select(timestep_acquisition_b,agent) %>% mutate(agent=agent+1)
+  ##ORDER OF ACQUISITION
+  ##TRANSMISSION WEIGHTS
+  sim_data = df %>%
+    filter(sim==i) %>%
+    mutate(agent=agent+1) %>%
+    arrange(agent)
+
+  t_weights = sim_data$transmission_weight
+
+  ##ORDER OF ACQUISITION
+  oata = sim_data %>%
+    arrange(timestep_acquisition_b) %>%
+    select(timestep_acquisition_b, agent) %>%
+    mutate(tied_acq = ifelse(lead(timestep_acquisition_b)==timestep_acquisition_b | lag(timestep_acquisition_b)==timestep_acquisition_b,1,0)) %>%
+    mutate(tied_acq = ifelse(is.na(tied_acq),0,tied_acq))
+
+  oata
+
   oa1 = oata$agent
+  seed_agent = oa1[1]
+  ties_vector = oata$tied_acq
 
   #exclude demonstrators
   demons<-rep(0,pop_size)
-  demons[oa1[1]] = 1
+  demons[seed_agent] = 1
+
   #Time of acquisition
   ta1 = oata$timestep_acquisition_b
-  nbdaData_cTADA<-nbdaData(label="Sim_0",assMatrix=socNet1, orderAcq = oa1, timeAcq = ta1, endTime = max(ta1) + 1, demons=demons)
 
+  #weightless
+  nbdaData_cTADA<-nbdaData(label="Sim_0",assMatrix=socNet1, orderAcq = oa1, timeAcq = ta1, endTime = max(ta1) + 1,  demons=demons)
   model_social<-tadaFit(nbdaData_cTADA, type="social", baseline = "constant", standardErrors = F)
   model_asocial<-tadaFit(nbdaData_cTADA, type="asocial", baseline = "constant", standardErrors = F)
 
-  sim=i
-
   est_s = model_social@outputPar[2]
-  s_CI_lower = 0  #profLikCI(which=1,model=model_social,lowerRange=c(0,5),upperRange=c(5,10))[1]
-  s_CI_upper = 0 # profLikCI(which=1,model=model_social,lowerRange=c(0,5),upperRange=c(5,10))[2]
-
   est_rate = 1/model_social@outputPar[1]
-  rate_CI_upper = 0 #profLikCI(which=0,model=model_social,lowerRange=c(0,1000),upperRange = c(1000,2000))[1]
-  rate_CI_lower = 0 #profLikCI(which=0,model=model_social,lowerRange=c(0,1000),upperRange = c(1000,2000))[2]
-
   aicc_social = model_social@aicc
   aicc_asocial = model_asocial@aicc
 
-
-  new = data.frame(sim,est_s, s_CI_lower , s_CI_upper, est_rate, rate_CI_lower , rate_CI_upper, aicc_social, aicc_asocial)
-  new
-  temp = rbind(temp,new)
+  data_type="time_of_acquisition"
+  model_type="weightless"
+  acquisition_weightless = data.frame(data_type, model_type, sim, est_s, est_rate, aicc_social, aicc_asocial)
+  temp = rbind(temp, acquisition_weightless)
 }
 
-df_summary = df %>% group_by(EWA_recent_payoff_weight, EWA_soc_info_weight, EWA_conformity, memory_window, graph_type,sim) %>% summarize()
-df_summary = left_join(df_summary,temp)
-df_summary_SB_AC = df_summary
-
-
-load(file="../model_outputs/Rda_files/df_NBDA_SB.Rda")
-df_ABM_acq_prod = df_NBDA_SB
-df = df_ABM_acq_prod %>% ungroup()
-temp <- data.frame(matrix(ncol = 9, nrow = 0))
-#provide column names
-colnames(temp) <- c('sim', 'est_s', 's_CI_lower', 's_CI_lower', 'est_rate', 'rate_CI_lower', 'rate_CI_upper', 'aicc_social', 'aicc_asocial')
-
-pop_size = max(df$agent+1)
-
-#Read in the csv file containing the social network, converting it to a matrix
-for (i in unique(df$sim)) {
-  print(i)
-  edgelist <- read.table(paste0("../model_outputs/csvs_raw/adjlists_data/NBDA_social_binary/adjlist_sim_",i,".txt"))
-  edgelist=edgelist[1:2]+1
-  edgelist=as.matrix(edgelist)
-  G <- graph.edgelist(edgelist,directed=FALSE);
-  socNet1 <- as_adjacency_matrix(G,type="both",names=TRUE,sparse=FALSE)
-  socNet1<-array(socNet1,dim=c(pop_size,pop_size,1))
-
-  #get order of acquisition
-  oata = df %>% filter(sim==i) %>% arrange(timestep_production_b) %>% select(timestep_production_b,agent) %>% mutate(agent=agent+1)
-  oa1 = oata$agent
-
-  #exclude demonstrators
-  demons<-rep(0,pop_size)
-  demons[oa1[1]] = 1
-  #Time of acquisition
-  ta1 = oata$timestep_production_b
-  nbdaData_cTADA<-nbdaData(label="Sim_0",assMatrix=socNet1, orderAcq = oa1, timeAcq = ta1, endTime = max(ta1) + 1, demons=demons)
-
-  model_social<-tadaFit(nbdaData_cTADA, type="social", baseline = "constant", standardErrors = F)
-  model_asocial<-tadaFit(nbdaData_cTADA, type="asocial", baseline = "constant", standardErrors = F)
-
-  sim=i
-
-  est_s = model_social@outputPar[2]
-  s_CI_lower = 0  #profLikCI(which=1,model=model_social,lowerRange=c(0,5),upperRange=c(5,10))[1]
-  s_CI_upper = 0 # profLikCI(which=1,model=model_social,lowerRange=c(0,5),upperRange=c(5,10))[2]
-
-  est_rate = 1/model_social@outputPar[1]
-  rate_CI_upper = 0 #profLikCI(which=0,model=model_social,lowerRange=c(0,1000),upperRange = c(1000,2000))[1]
-  rate_CI_lower = 0 #profLikCI(which=0,model=model_social,lowerRange=c(0,1000),upperRange = c(1000,2000))[2]
-
-  aicc_social = model_social@aicc
-  aicc_asocial = model_asocial@aicc
-
-
-  new = data.frame(sim,est_s, s_CI_lower , s_CI_upper, est_rate, rate_CI_lower , rate_CI_upper, aicc_social, aicc_asocial)
-  new
-  temp = rbind(temp,new)
-}
-
-df_summary = df %>% group_by(EWA_recent_payoff_weight, EWA_soc_info_weight, EWA_conformity, memory_window, graph_type,sim) %>% summarize()
-df_summary = left_join(df_summary,temp)
-df_summary_SB_FP= df_summary
-
+df_summary = df %>% group_by(EWA_rho, EWA_sigma, EWA_chi, EWA_alpha, memory_window, graph_type,sim) %>% summarize()
+df_summary_SB = left_join(df_summary,temp)
 
 ####BINARY ASOCIAL DATA####
 load(file="../model_outputs/Rda_files/df_NBDA_AB.Rda")
 summary(df_NBDA_AB)
-df_ABM_acq_prod = df_NBDA_AB
-df = df_ABM_acq_prod %>% ungroup()
-summary(df)
-temp <- data.frame(matrix(ncol = 9, nrow = 0))
+df = df_NBDA_AB %>% ungroup()
+temp <- data.frame(matrix(ncol = 7, nrow = 0))
 #provide column names
-colnames(temp) <- c('sim', 'est_s', 's_CI_lower', 's_CI_lower', 'est_rate', 'rate_CI_lower', 'rate_CI_upper', 'aicc_social', 'aicc_asocial')
+colnames(temp) <- c("data_type", "model_type", "sim", "est_s", "est_rate", "aicc_social", "aicc_asocial")
 
 pop_size = max(df$agent+1)
 
 #Read in the csv file containing the social network, converting it to a matrix
 for (i in unique(df$sim)) {
   print(i)
+  sim=i
   edgelist <- read.table(paste0("../model_outputs/csvs_raw/adjlists_data/NBDA_asocial_binary/adjlist_sim_",i,".txt"))
   edgelist=edgelist[1:2]+1
   edgelist=as.matrix(edgelist)
+
   G <- graph.edgelist(edgelist,directed=FALSE);
   socNet1 <- as_adjacency_matrix(G,type="both",names=TRUE,sparse=FALSE)
   socNet1<-array(socNet1,dim=c(pop_size,pop_size,1))
 
-  #get order of acquisition
-  oata = df %>% filter(sim==i) %>% arrange(timestep_acquisition_b) %>% select(timestep_acquisition_b,agent) %>% mutate(agent=agent+1)
+  ##ORDER OF ACQUISITION
+  ##TRANSMISSION WEIGHTS
+  sim_data = df %>%
+    filter(sim==i) %>%
+    mutate(agent=agent+1) %>%
+    arrange(agent)
+
+  t_weights = sim_data$transmission_weight
+
+  ##ORDER OF ACQUISITION
+  oata = sim_data %>%
+    arrange(timestep_acquisition_b) %>%
+    select(timestep_acquisition_b, agent) %>%
+    mutate(tied_acq = ifelse(lead(timestep_acquisition_b)==timestep_acquisition_b | lag(timestep_acquisition_b)==timestep_acquisition_b,1,0)) %>%
+    mutate(tied_acq = ifelse(is.na(tied_acq),0,tied_acq))
+
   oa1 = oata$agent
+  seed_agent = oa1[1]
+  ties_vector = oata$tied_acq
 
   #exclude demonstrators
   demons<-rep(0,pop_size)
-  demons[oa1[1]] = 1
+  demons[seed_agent] = 1
+
   #Time of acquisition
   ta1 = oata$timestep_acquisition_b
-  nbdaData_cTADA<-nbdaData(label="Sim_0",assMatrix=socNet1, orderAcq = oa1, timeAcq = ta1, endTime = max(ta1) + 1, demons=demons)
 
+  #weightless
+  nbdaData_cTADA<-nbdaData(label="Sim_0",assMatrix=socNet1, orderAcq = oa1, timeAcq = ta1,  endTime = max(ta1) + 1, demons=demons)
   model_social<-tadaFit(nbdaData_cTADA, type="social", baseline = "constant", standardErrors = F)
   model_asocial<-tadaFit(nbdaData_cTADA, type="asocial", baseline = "constant", standardErrors = F)
 
-  sim=i
-
   est_s = model_social@outputPar[2]
-  s_CI_lower = 0  #profLikCI(which=1,model=model_social,lowerRange=c(0,5),upperRange=c(5,10))[1]
-  s_CI_upper = 0 # profLikCI(which=1,model=model_social,lowerRange=c(0,5),upperRange=c(5,10))[2]
-
   est_rate = 1/model_social@outputPar[1]
-  rate_CI_upper = 0 #profLikCI(which=0,model=model_social,lowerRange=c(0,1000),upperRange = c(1000,2000))[1]
-  rate_CI_lower = 0 #profLikCI(which=0,model=model_social,lowerRange=c(0,1000),upperRange = c(1000,2000))[2]
-
   aicc_social = model_social@aicc
   aicc_asocial = model_asocial@aicc
 
+  data_type="time_of_acquisition"
+  model_type="weightless"
+  acquisition_weightless = data.frame(data_type, model_type, sim, est_s, est_rate, aicc_social, aicc_asocial)
 
-  new = data.frame(sim,est_s, s_CI_lower , s_CI_upper, est_rate, rate_CI_lower , rate_CI_upper, aicc_social, aicc_asocial)
-  new
-  temp = rbind(temp,new)
+  temp = rbind(temp, acquisition_weightless)
 }
 
-df_summary = df %>% group_by(EWA_recent_payoff_weight, EWA_soc_info_weight, EWA_conformity, memory_window, graph_type,sim) %>% summarize()
-df_summary = left_join(df_summary,temp)
-df_summary_AB_AC = df_summary
+df_summary = df %>% group_by(EWA_rho, EWA_sigma, EWA_chi, EWA_alpha, memory_window, graph_type,sim) %>% summarize()
+df_summary_AB = left_join(df_summary,temp)
 
-load(file="../model_outputs/Rda_files/df_NBDA_AB.Rda")
-summary(df_NBDA_AB)
-df_ABM_acq_prod = df_NBDA_AB
-df = df_ABM_acq_prod %>% ungroup()
-summary(df)
-temp <- data.frame(matrix(ncol = 9, nrow = 0))
-#provide column names
-colnames(temp) <- c('sim', 'est_s', 's_CI_lower', 's_CI_lower', 'est_rate', 'rate_CI_lower', 'rate_CI_upper', 'aicc_social', 'aicc_asocial')
+#bind social and asocial together
+df_summary_AB$condition="asocial learning"
+df_summary_SB$condition="social transmission"
 
-pop_size = max(df$agent+1)
+df_ideal = bind_rows(df_summary_SB, df_summary_AB) %>% mutate(data_type=as.factor(data_type),model_type=as.factor(model_type), condition=as.factor(condition))
+save(df_ideal,file="../model_outputs/Rda_files/df_NBDA_figure_data_binary.Rda")
 
-#Read in the csv file containing the social network, converting it to a matrix
-for (i in unique(df$sim)) {
-  print(i)
-  edgelist <- read.table(paste0("../model_outputs/csvs_raw/adjlists_data/NBDA_asocial_binary/adjlist_sim_",i,".txt"))
-  edgelist=edgelist[1:2]+1
-  edgelist=as.matrix(edgelist)
-  G <- graph.edgelist(edgelist,directed=FALSE);
-  socNet1 <- as_adjacency_matrix(G,type="both",names=TRUE,sparse=FALSE)
-  socNet1<-array(socNet1,dim=c(pop_size,pop_size,1))
-
-  #get order of acquisition
-  oata = df %>% filter(sim==i) %>% arrange(timestep_production_b) %>% select(timestep_production_b,agent) %>% mutate(agent=agent+1)
-  oa1 = oata$agent
-
-  #exclude demonstrators
-  demons<-rep(0,pop_size)
-  demons[oa1[1]] = 1
-  #Time of acquisition
-  ta1 = oata$timestep_production_b
-  nbdaData_cTADA<-nbdaData(label="Sim_0",assMatrix=socNet1, orderAcq = oa1, timeAcq = ta1, endTime = max(ta1) + 1, demons=demons)
-
-  model_social<-tadaFit(nbdaData_cTADA, type="social", baseline = "constant", standardErrors = F)
-  model_asocial<-tadaFit(nbdaData_cTADA, type="asocial", baseline = "constant", standardErrors = F)
-
-  sim=i
-
-  est_s = model_social@outputPar[2]
-  s_CI_lower = 0  #profLikCI(which=1,model=model_social,lowerRange=c(0,5),upperRange=c(5,10))[1]
-  s_CI_upper = 0 # profLikCI(which=1,model=model_social,lowerRange=c(0,5),upperRange=c(5,10))[2]
-
-  est_rate = 1/model_social@outputPar[1]
-  rate_CI_upper = 0 #profLikCI(which=0,model=model_social,lowerRange=c(0,1000),upperRange = c(1000,2000))[1]
-  rate_CI_lower = 0 #profLikCI(which=0,model=model_social,lowerRange=c(0,1000),upperRange = c(1000,2000))[2]
-
-  aicc_social = model_social@aicc
-  aicc_asocial = model_asocial@aicc
-
-
-  new = data.frame(sim,est_s, s_CI_lower , s_CI_upper, est_rate, rate_CI_lower , rate_CI_upper, aicc_social, aicc_asocial)
-  new
-  temp = rbind(temp,new)
-}
-
-df_summary = df %>% group_by(EWA_recent_payoff_weight, EWA_soc_info_weight, EWA_conformity, memory_window, graph_type,sim) %>% summarize()
-df_summary = left_join(df_summary,temp)
-df_summary_AB_FP= df_summary
-
-
-df_summary_SB_AC$feeder_data="acquisition"
-df_summary_SB_FP$feeder_data="first production"
-df_summary_SB_AC$diffusion="social diffusion"
-df_summary_SB_FP$diffusion="social diffusion"
-df_summary_AB_AC$feeder_data="acquisition"
-df_summary_AB_FP$feeder_data="first production"
-df_summary_AB_AC$diffusion="asocial diffusion"
-df_summary_AB_FP$diffusion="asocial diffusion"
-
-df = bind_rows(df_summary_AB_AC,df_summary_AB_FP,df_summary_SB_AC,df_summary_SB_FP)
-save(df,file="../model_outputs/Rda_files/df_NBDA_figure_data_binary.Rda")
+ggplot(df_ideal, aes(x=condition,y=aicc_asocial-aicc_social))+
+  facet_grid(model_type~data_type)+
+  geom_jitter()+
+  geom_boxplot()
 
 ####PROPORTIONAL SOCIAL DATA####
 load(file="../model_outputs/Rda_files/df_NBDA_SP.Rda")
 df = df_NBDA_SP %>% ungroup()
-summary(df)
-temp <- data.frame(matrix(ncol = 9, nrow = 0))
+temp <- data.frame(matrix(ncol = 7, nrow = 0))
 #provide column names
-colnames(temp) <- c('sim', 'est_s', 's_CI_lower', 's_CI_lower', 'est_rate', 'rate_CI_lower', 'rate_CI_upper', 'aicc_social', 'aicc_asocial')
+colnames(temp) <- c("data_type", "model_type", "sim", "est_s", "est_rate", "aicc_social", "aicc_asocial")
 
 pop_size = max(df$agent+1)
 
 #Read in the csv file containing the social network, converting it to a matrix
 for (i in unique(df$sim)) {
   print(i)
+  sim=i
   edgelist <- read.table(paste0("../model_outputs/csvs_raw/adjlists_data/NBDA_social_proportional/adjlist_sim_",i,".txt"))
   edgelist=edgelist[1:2]+1
   edgelist=as.matrix(edgelist)
+
   G <- graph.edgelist(edgelist,directed=FALSE);
   socNet1 <- as_adjacency_matrix(G,type="both",names=TRUE,sparse=FALSE)
   socNet1<-array(socNet1,dim=c(pop_size,pop_size,1))
 
-  #get order of acquisition
-  oata = df %>% filter(sim==i) %>% arrange(timestep_acquisition_b) %>% select(timestep_acquisition_b,agent) %>% mutate(agent=agent+1)
+  ##TRANSMISSION WEIGHTS
+  sim_data = df %>%
+    filter(sim==i) %>%
+    mutate(agent=agent+1) %>%
+    arrange(agent)
+
+  t_weights = sim_data$transmission_weight
+
+  ##ORDER OF ACQUISITION
+  oata = sim_data %>%
+    arrange(timestep_acquisition_b) %>%
+    select(timestep_acquisition_b, agent)
+
   oa1 = oata$agent
+  seed_agent = oa1[1]
+  ties_vector = oata$tied_acq
 
   #exclude demonstrators
   demons<-rep(0,pop_size)
-  demons[oa1[1]] = 1
+  demons[seed_agent] = 1
+
   #Time of acquisition
   ta1 = oata$timestep_acquisition_b
-  nbdaData_cTADA<-nbdaData(label="Sim_0",assMatrix=socNet1, orderAcq = oa1, timeAcq = ta1, endTime = max(ta1) + 1, demons=demons)
 
+  #weightless
+  nbdaData_cTADA<-nbdaData(label="Sim_0",assMatrix=socNet1, orderAcq = oa1, timeAcq = ta1, endTime = max(ta1) + 1, demons=demons)
   model_social<-tadaFit(nbdaData_cTADA, type="social", baseline = "constant", standardErrors = F)
   model_asocial<-tadaFit(nbdaData_cTADA, type="asocial", baseline = "constant", standardErrors = F)
 
-  sim=i
-
   est_s = model_social@outputPar[2]
-  s_CI_lower = 0  #profLikCI(which=1,model=model_social,lowerRange=c(0,5),upperRange=c(5,10))[1]
-  s_CI_upper = 0 # profLikCI(which=1,model=model_social,lowerRange=c(0,5),upperRange=c(5,10))[2]
-
   est_rate = 1/model_social@outputPar[1]
-  rate_CI_upper = 0 #profLikCI(which=0,model=model_social,lowerRange=c(0,1000),upperRange = c(1000,2000))[1]
-  rate_CI_lower = 0 #profLikCI(which=0,model=model_social,lowerRange=c(0,1000),upperRange = c(1000,2000))[2]
-
   aicc_social = model_social@aicc
   aicc_asocial = model_asocial@aicc
 
+  data_type="time_of_acquisition"
+  model_type="weightless"
+  acquisition_weightless = data.frame(data_type, model_type, sim, est_s, est_rate, aicc_social, aicc_asocial)
 
-  new = data.frame(sim,est_s, s_CI_lower , s_CI_upper, est_rate, rate_CI_lower , rate_CI_upper, aicc_social, aicc_asocial)
-  temp = rbind(temp,new)
-}
+  #weighted
+  nbdaData_cTADA<-nbdaData(label="Sim_0",assMatrix=socNet1, orderAcq = oa1, timeAcq = ta1, endTime = max(ta1) + 1, demons=demons, weights = t_weights)
+  model_social<-tadaFit(nbdaData_cTADA, type="social", baseline = "constant", standardErrors = F)
+  model_asocial<-tadaFit(nbdaData_cTADA, type="asocial", baseline = "constant", standardErrors = F)
 
-df_summary = df %>% group_by(EWA_recent_payoff_weight, EWA_soc_info_weight, EWA_conformity, EWA_tau, memory_window, graph_type,sim) %>% summarize()
-df_summary = left_join(df_summary,temp)
-df_summary_SP_AC = df_summary
+  est_s = model_social@outputPar[2]
+  est_rate = 1/model_social@outputPar[1]
+  aicc_social = model_social@aicc
+  aicc_asocial = model_asocial@aicc
 
-load(file="../model_outputs/Rda_files/df_NBDA_SP.Rda")
-df = df_NBDA_SP %>% ungroup()
-temp <- data.frame(matrix(ncol = 9, nrow = 0))
-#provide column names
-colnames(temp) <- c('sim', 'est_s', 's_CI_lower', 's_CI_lower', 'est_rate', 'rate_CI_lower', 'rate_CI_upper', 'aicc_social', 'aicc_asocial')
+  data_type="time_of_acquisition"
+  model_type="weighted"
+  acquisition_weighted = data.frame(data_type, model_type, sim, est_s, est_rate, aicc_social, aicc_asocial)
 
-pop_size = max(df$agent+1)
-
-#Read in the csv file containing the social network, converting it to a matrix
-for (i in unique(df$sim)) {
-  print(i)
-  edgelist <- read.table(paste0("../model_outputs/csvs_raw/adjlists_data/NBDA_social_proportional/adjlist_sim_",i,".txt"))
-  edgelist=edgelist[1:2]+1
-  edgelist=as.matrix(edgelist)
-  G <- graph.edgelist(edgelist,directed=FALSE);
-  socNet1 <- as_adjacency_matrix(G,type="both",names=TRUE,sparse=FALSE)
-  socNet1<-array(socNet1,dim=c(pop_size,pop_size,1))
-
-  #get order of acquisition
-  oata = df %>% filter(sim==i) %>% arrange(timestep_production_b) %>% select(timestep_production_b,agent) %>% mutate(agent=agent+1)
+  #ORDER OF PRODUCTION
+  oata = sim_data %>%
+    arrange(timestep_production_b) %>%
+    select(timestep_production_b, agent)
   oa1 = oata$agent
+  seed_agent = oa1[1]
+  ties_vector = oata$tied_acq
 
   #exclude demonstrators
   demons<-rep(0,pop_size)
-  demons[oa1[1]] = 1
+  demons[seed_agent] = 1
+
   #Time of acquisition
   ta1 = oata$timestep_production_b
-  nbdaData_cTADA<-nbdaData(label="Sim_0",assMatrix=socNet1, orderAcq = oa1, timeAcq = ta1, endTime = max(ta1) + 1, demons=demons)
 
+  #weightless
+  nbdaData_cTADA<-nbdaData(label="Sim_0",assMatrix=socNet1, orderAcq = oa1, timeAcq = ta1, endTime = max(ta1) + 1, demons=demons)
   model_social<-tadaFit(nbdaData_cTADA, type="social", baseline = "constant", standardErrors = F)
   model_asocial<-tadaFit(nbdaData_cTADA, type="asocial", baseline = "constant", standardErrors = F)
 
-  sim=i
-
   est_s = model_social@outputPar[2]
-  s_CI_lower = 0  #profLikCI(which=1,model=model_social,lowerRange=c(0,5),upperRange=c(5,10))[1]
-  s_CI_upper = 0 # profLikCI(which=1,model=model_social,lowerRange=c(0,5),upperRange=c(5,10))[2]
-
   est_rate = 1/model_social@outputPar[1]
-  rate_CI_upper = 0 #profLikCI(which=0,model=model_social,lowerRange=c(0,1000),upperRange = c(1000,2000))[1]
-  rate_CI_lower = 0 #profLikCI(which=0,model=model_social,lowerRange=c(0,1000),upperRange = c(1000,2000))[2]
-
   aicc_social = model_social@aicc
   aicc_asocial = model_asocial@aicc
 
+  data_type="time_of_first_production"
+  model_type="weightless"
 
-  new = data.frame(sim,est_s, s_CI_lower , s_CI_upper, est_rate, rate_CI_lower , rate_CI_upper, aicc_social, aicc_asocial)
-  temp = rbind(temp,new)
+  production_weightless = data.frame(data_type, model_type, sim, est_s, est_rate, aicc_social, aicc_asocial)
+
+  #weighted
+  nbdaData_cTADA<-nbdaData(label="Sim_0",assMatrix=socNet1, orderAcq = oa1, timeAcq = ta1, endTime = max(ta1) + 1,  demons=demons, weights = t_weights)
+  model_social<-tadaFit(nbdaData_cTADA, type="social", baseline = "constant", standardErrors = F)
+  model_asocial<-tadaFit(nbdaData_cTADA, type="asocial", baseline = "constant", standardErrors = F)
+
+  #collect estimates and AICCs
+  est_s = model_social@outputPar[2]
+  est_rate = 1/model_social@outputPar[1]
+  aicc_social = model_social@aicc
+  aicc_asocial = model_asocial@aicc
+
+  data_type="time_of_first_production"
+  model_type="weighted"
+
+  production_weighted = data.frame(data_type, model_type, sim, est_s, est_rate, aicc_social, aicc_asocial)
+
+
+  temp = rbind(temp, acquisition_weighted, acquisition_weightless, production_weighted, production_weightless)
 }
 
-df_summary = df %>% group_by(EWA_recent_payoff_weight, EWA_soc_info_weight, EWA_conformity, EWA_tau, memory_window, graph_type,sim) %>% summarize()
+df_summary = df %>% group_by(EWA_rho, EWA_sigma, EWA_chi, EWA_alpha, memory_window, graph_type,sim) %>% summarize()
 df_summary = left_join(df_summary,temp)
-df_summary_SP_FP= df_summary
+df_summary_SP = df_summary
+
 
 ####proportional ASOCIAL DATA####
 load(file="../model_outputs/Rda_files/df_NBDA_AP.Rda")
 df = df_NBDA_AP %>% ungroup()
-temp <- data.frame(matrix(ncol = 9, nrow = 0))
+temp <- data.frame(matrix(ncol = 7, nrow = 0))
 #provide column names
-colnames(temp) <- c('sim', 'est_s', 's_CI_lower', 's_CI_lower', 'est_rate', 'rate_CI_lower', 'rate_CI_upper', 'aicc_social', 'aicc_asocial')
+colnames(temp) <- c("data_type", "model_type", "sim", "est_s", "est_rate", "aicc_social", "aicc_asocial")
 
 pop_size = max(df$agent+1)
 
 #Read in the csv file containing the social network, converting it to a matrix
 for (i in unique(df$sim)) {
   print(i)
+  sim=i
   edgelist <- read.table(paste0("../model_outputs/csvs_raw/adjlists_data/NBDA_asocial_proportional/adjlist_sim_",i,".txt"))
   edgelist=edgelist[1:2]+1
   edgelist=as.matrix(edgelist)
+
   G <- graph.edgelist(edgelist,directed=FALSE);
   socNet1 <- as_adjacency_matrix(G,type="both",names=TRUE,sparse=FALSE)
   socNet1<-array(socNet1,dim=c(pop_size,pop_size,1))
 
-  #get order of acquisition
-  oata = df %>% filter(sim==i) %>% arrange(timestep_acquisition_b) %>% select(timestep_acquisition_b,agent) %>% mutate(agent=agent+1)
+  ##TRANSMISSION WEIGHTS
+  sim_data = df %>%
+    filter(sim==i) %>%
+    mutate(agent=agent+1) %>%
+    arrange(agent)
+
+  t_weights = sim_data$transmission_weight
+
+  ##ORDER OF ACQUISITION
+  oata = sim_data %>%
+    arrange(timestep_acquisition_b) %>%
+    select(timestep_acquisition_b, agent)
+
   oa1 = oata$agent
+  seed_agent = oa1[1]
+  ties_vector = oata$tied_acq
 
   #exclude demonstrators
   demons<-rep(0,pop_size)
-  demons[oa1[1]] = 1
+  demons[seed_agent] = 1
+
   #Time of acquisition
   ta1 = oata$timestep_acquisition_b
-  nbdaData_cTADA<-nbdaData(label="Sim_0",assMatrix=socNet1, orderAcq = oa1, timeAcq = ta1, endTime = max(ta1) + 1, demons=demons)
 
+  #weightless
+  nbdaData_cTADA<-nbdaData(label="Sim_0",assMatrix=socNet1, orderAcq = oa1, timeAcq = ta1, endTime = max(ta1) + 1,  demons=demons)
   model_social<-tadaFit(nbdaData_cTADA, type="social", baseline = "constant", standardErrors = F)
   model_asocial<-tadaFit(nbdaData_cTADA, type="asocial", baseline = "constant", standardErrors = F)
 
-  sim=i
-
   est_s = model_social@outputPar[2]
-  s_CI_lower = 0  #profLikCI(which=1,model=model_social,lowerRange=c(0,5),upperRange=c(5,10))[1]
-  s_CI_upper = 0 # profLikCI(which=1,model=model_social,lowerRange=c(0,5),upperRange=c(5,10))[2]
-
   est_rate = 1/model_social@outputPar[1]
-  rate_CI_upper = 0 #profLikCI(which=0,model=model_social,lowerRange=c(0,1000),upperRange = c(1000,2000))[1]
-  rate_CI_lower = 0 #profLikCI(which=0,model=model_social,lowerRange=c(0,1000),upperRange = c(1000,2000))[2]
-
   aicc_social = model_social@aicc
   aicc_asocial = model_asocial@aicc
 
+  data_type="time_of_acquisition"
+  model_type="weightless"
+  acquisition_weightless = data.frame(data_type, model_type, sim, est_s, est_rate, aicc_social, aicc_asocial)
 
-  new = data.frame(sim,est_s, s_CI_lower , s_CI_upper, est_rate, rate_CI_lower , rate_CI_upper, aicc_social, aicc_asocial)
-  temp = rbind(temp,new)
-}
+  #weighted
+  nbdaData_cTADA<-nbdaData(label="Sim_0",assMatrix=socNet1, orderAcq = oa1, timeAcq = ta1, endTime = max(ta1) + 1,  demons=demons, weights = t_weights)
+  model_social<-tadaFit(nbdaData_cTADA, type="social", baseline = "constant", standardErrors = F)
+  model_asocial<-tadaFit(nbdaData_cTADA, type="asocial", baseline = "constant", standardErrors = F)
 
-df_summary = df %>% group_by(EWA_recent_payoff_weight, EWA_soc_info_weight, EWA_conformity, EWA_tau, memory_window, graph_type,sim) %>% summarize()
-df_summary = left_join(df_summary,temp)
-df_summary_AP_AC = df_summary
+  est_s = model_social@outputPar[2]
+  est_rate = 1/model_social@outputPar[1]
+  aicc_social = model_social@aicc
+  aicc_asocial = model_asocial@aicc
 
-load(file="../model_outputs/Rda_files/df_NBDA_AP.Rda")
-df = df_NBDA_AP %>% ungroup()
-temp <- data.frame(matrix(ncol = 9, nrow = 0))
-#provide column names
-colnames(temp) <- c('sim', 'est_s', 's_CI_lower', 's_CI_lower', 'est_rate', 'rate_CI_lower', 'rate_CI_upper', 'aicc_social', 'aicc_asocial')
+  data_type="time_of_acquisition"
+  model_type="weighted"
+  acquisition_weighted = data.frame(data_type, model_type, sim, est_s, est_rate, aicc_social, aicc_asocial)
 
-pop_size = max(df$agent+1)
+  #ORDER OF PRODUCTION
+  oata = sim_data %>%
+    arrange(timestep_production_b) %>%
+    select(timestep_production_b, agent) %>%
+    mutate(tied_acq = ifelse(lead(timestep_production_b)==timestep_production_b | lag(timestep_production_b)==timestep_production_b,1,0)) %>%
+    mutate(tied_acq = ifelse(is.na(tied_acq),0,tied_acq))
 
-#Read in the csv file containing the social network, converting it to a matrix
-for (i in unique(df$sim)) {
-  print(i)
-  edgelist <- read.table(paste0("../model_outputs/csvs_raw/adjlists_data/NBDA_asocial_proportional/adjlist_sim_",i,".txt"))
-  edgelist=edgelist[1:2]+1
-  edgelist=as.matrix(edgelist)
-  G <- graph.edgelist(edgelist,directed=FALSE);
-  socNet1 <- as_adjacency_matrix(G,type="both",names=TRUE,sparse=FALSE)
-  socNet1<-array(socNet1,dim=c(pop_size,pop_size,1))
-
-  #get order of acquisition
-  oata = df %>% filter(sim==i) %>% arrange(timestep_production_b) %>% select(timestep_production_b,agent) %>% mutate(agent=agent+1)
   oa1 = oata$agent
+  seed_agent = oa1[1]
+  ties_vector = oata$tied_acq
 
   #exclude demonstrators
   demons<-rep(0,pop_size)
-  demons[oa1[1]] = 1
+  demons[seed_agent] = 1
+
   #Time of acquisition
   ta1 = oata$timestep_production_b
-  nbdaData_cTADA<-nbdaData(label="Sim_0",assMatrix=socNet1, orderAcq = oa1, timeAcq = ta1, endTime = max(ta1) + 1, demons=demons)
 
+  #weightless
+  nbdaData_cTADA<-nbdaData(label="Sim_0",assMatrix=socNet1, orderAcq = oa1, timeAcq = ta1, endTime = max(ta1) + 1,  demons=demons)
   model_social<-tadaFit(nbdaData_cTADA, type="social", baseline = "constant", standardErrors = F)
   model_asocial<-tadaFit(nbdaData_cTADA, type="asocial", baseline = "constant", standardErrors = F)
 
-  sim=i
-
   est_s = model_social@outputPar[2]
-  s_CI_lower = 0  #profLikCI(which=1,model=model_social,lowerRange=c(0,5),upperRange=c(5,10))[1]
-  s_CI_upper = 0 # profLikCI(which=1,model=model_social,lowerRange=c(0,5),upperRange=c(5,10))[2]
-
   est_rate = 1/model_social@outputPar[1]
-  rate_CI_upper = 0 #profLikCI(which=0,model=model_social,lowerRange=c(0,1000),upperRange = c(1000,2000))[1]
-  rate_CI_lower = 0 #profLikCI(which=0,model=model_social,lowerRange=c(0,1000),upperRange = c(1000,2000))[2]
-
   aicc_social = model_social@aicc
   aicc_asocial = model_asocial@aicc
 
+  data_type="time_of_first_production"
+  model_type="weightless"
 
-  new = data.frame(sim,est_s, s_CI_lower , s_CI_upper, est_rate, rate_CI_lower , rate_CI_upper, aicc_social, aicc_asocial)
-  temp = rbind(temp,new)
+  production_weightless = data.frame(data_type, model_type, sim, est_s, est_rate, aicc_social, aicc_asocial)
+
+  #weighted
+  nbdaData_cTADA<-nbdaData(label="Sim_0",assMatrix=socNet1, orderAcq = oa1, timeAcq = ta1, endTime = max(ta1) + 1,  demons=demons, weights = t_weights)
+  model_social<-tadaFit(nbdaData_cTADA, type="social", baseline = "constant", standardErrors = F)
+  model_asocial<-tadaFit(nbdaData_cTADA, type="asocial", baseline = "constant", standardErrors = F)
+
+  #collect estimates and AICCs
+  est_s = model_social@outputPar[2]
+  est_rate = 1/model_social@outputPar[1]
+  aicc_social = model_social@aicc
+  aicc_asocial = model_asocial@aicc
+
+  data_type="time_of_first_production"
+  model_type="weighted"
+
+  production_weighted = data.frame(data_type, model_type, sim, est_s, est_rate, aicc_social, aicc_asocial)
+
+
+  temp = rbind(temp, acquisition_weighted, acquisition_weightless, production_weighted, production_weightless)
 }
 
-df_summary = df %>% group_by(EWA_recent_payoff_weight, EWA_soc_info_weight, EWA_conformity, EWA_tau, memory_window, graph_type,sim) %>% summarize()
+df_summary = df %>% group_by(EWA_rho, EWA_sigma, EWA_chi, EWA_alpha, memory_window, graph_type,sim) %>% summarize()
 df_summary = left_join(df_summary,temp)
-df_summary_AP_FP= df_summary
+df_summary_AP= df_summary
+
+df_summary_SP$condition="social transmission"
+df_summary_AP$condition="asocial learning"
+
+df_realistic = bind_rows(df_summary_SP,df_summary_AP)
+df_realistic = df_realistic %>% mutate(data_type=as.factor(data_type),model_type=as.factor(model_type), condition=as.factor(condition))
+save(df_realistic,file="../model_outputs/Rda_files/df_NBDA_figure_data_proportional.Rda")
+
+detach(package:NBDA, unload=T)
+detach(package:igraph, unload=T)
+detach(package:sna, unload=T)
+detach(package:reader, unload=T)
 
 
-df_summary_SP_AC$feeder_data="acquisition"
-df_summary_SP_FP$feeder_data="first production"
-df_summary_SP_AC$diffusion="social diffusion"
-df_summary_SP_FP$diffusion="social diffusion"
-df_summary_AP_AC$feeder_data="acquisition"
-df_summary_AP_FP$feeder_data="first production"
-df_summary_AP_AC$diffusion="asocial diffusion"
-df_summary_AP_FP$diffusion="asocial diffusion"
-
-df = bind_rows(df_summary_AP_AC,df_summary_AP_FP,df_summary_SP_AC,df_summary_SP_FP)
-save(df,file="../model_outputs/Rda_files/df_NBDA_figure_data_proportional.Rda")
+ggplot(df_realistic, aes(x=condition,y=aicc_asocial-aicc_social))+
+  facet_grid(model_type~data_type)+
+  geom_jitter()+
+  geom_boxplot()

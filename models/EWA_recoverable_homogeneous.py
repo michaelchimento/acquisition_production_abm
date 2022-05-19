@@ -304,7 +304,7 @@ def simulation(params_list):
 if __name__=="__main__":
 
     #simulation parameters
-    replicates= 1
+    replicates= 10
     t_steps = 300 #timesteps to run simulation
 
     ### Population parameters ###

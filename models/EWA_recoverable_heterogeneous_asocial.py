@@ -400,7 +400,7 @@ def simulation(lock,master_sim_num,params_list):
 
 
 #simulation parameters
-replicates=1
+replicates=10
 full_initial_weights = False
 
 ### Population parameters ###
