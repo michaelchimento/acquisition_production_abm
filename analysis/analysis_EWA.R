@@ -29,7 +29,6 @@ data= data.frame(post_rho=numeric(),
                  sim=numeric(),
                  grouping=numeric())
 
-
 for (i in unique(df_EWA$sim)){
     print(paste("INFERRING VALUES FROM SIMULATION",i))
     df = df_EWA %>%
@@ -53,7 +52,7 @@ for (i in unique(df_EWA$sim)){
 
     #fit model in stan
     fit <- stan( file = 'stan_code/stan_model_noRE_rhosigma.stan', data = ds ,
-                       iter = 2000, warmup=1000, chains=3, cores=3, pars=parlist,
+                       iter = 4000, warmup=1000, chains=5, cores=5, pars=parlist,
                        control=list( adapt_delta=0.95 ))
 
     sim=df$sim[1]
@@ -80,9 +79,11 @@ for (i in unique(df_EWA$sim)){
     data = rbind(data,new)
   }
 
-
 data$sim = as.factor(data$sim)
 df_vanilla = data
+
+summary(df_vanilla)
+
 save(df_vanilla,file="../model_outputs/Rda_files/df_EWA_posterior_homogeneous_inference_10sim.Rda")
 
 ####SOCIAL DIFFUSION####
@@ -138,7 +139,7 @@ for (i in unique(df_EWA$sim)){
 
   #fit model in stan
   fit <- stan( file = 'stan_code/stan_model_noRE_rhosigma.stan', data = ds ,
-               iter = 2000, warmup=1000, chains=3, cores=3, pars=parlist,
+               iter = 4000, warmup=1000, chains=5, cores=5, pars=parlist,
                control=list( adapt_delta=0.95 ))
 
   sim=df$sim[1]
@@ -220,7 +221,7 @@ for (i in unique(df_EWA$sim)){
 
   #fit model in stan
   fit <- stan( file = 'stan_code/stan_model_noRE_rhosigma.stan', data = ds ,
-               iter = 2000, warmup=1000, chains=3, cores=3, pars=parlist,
+               iter = 4000, warmup=1000, chains=5, cores=5, pars=parlist,
                control=list( adapt_delta=0.95 ))
 
   sim=df$sim[1]

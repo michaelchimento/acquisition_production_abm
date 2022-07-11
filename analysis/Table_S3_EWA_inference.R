@@ -71,3 +71,4 @@ kable(t,booktabs = T,
   pack_rows(index=c("Homogenous"=6, "Heterogenous (social transmission)"=6,"Heterogenous (asocial learning)"=6 ))%>%
   column_spec(column = 1, bold = T) %>%
   collapse_rows(columns = 1, valign = "top")
+t

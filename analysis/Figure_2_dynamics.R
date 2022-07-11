@@ -5,6 +5,8 @@ setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 load(file="../model_outputs/Rda_files/df_maintext.Rda")
 
 fun_range <- function(x) {(x - min(x)) / (max(x) - min(x))}
+rsquare <- function (x, y) cor(x, y) ^ 2
+
 
 #Panel A: acquisition and production curves over normalized time
 df = df_ABM_maintext %>% filter(EWA_sigma=="medium", EWA_rho=="medium", EWA_chi=="linear bias", EWA_alpha=="risk-neutral", memory_window==10)
@@ -39,6 +41,8 @@ df = df %>% group_by(sim) %>% arrange(timestep_production_b) %>% mutate(order_pr
 
 df = df %>% filter(EWA_sigma=="medium", EWA_rho=="medium", EWA_chi=="linear bias", EWA_alpha=="risk-neutral", memory_window==10)
 
+rsquare(df$order_production,df$order_acquisition)
+
 p2= ggplot(df %>% group_by(order_production,order_acquisition) %>% mutate(count=n()), aes(x=order_acquisition,y=order_production, fill=count))+
   geom_tile() +
   labs(x="Order of acquisition", y="Order of production", fill="count")+
@@ -58,6 +62,9 @@ df %>% ungroup() %>% group_by(EWA_sigma, EWA_rho, EWA_chi, EWA_alpha, memory_win
 df = df %>% filter(EWA_sigma=="weak", EWA_rho=="strong", EWA_chi=="conformist bias", EWA_alpha=="risk-averse", memory_window==10)
 1-.168
 df %>% ungroup() %>% summarize(sum(order_acquisition==order_production)/n())
+
+rsquare(df$order_production,df$order_acquisition)
+
 
 p3= ggplot(df %>% group_by(order_production,order_acquisition) %>% mutate(count=n()), aes(x=order_acquisition,y=order_production, fill=count))+
   geom_tile() +

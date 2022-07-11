@@ -18,6 +18,6 @@ ba = image_read("../output/network_diagrams/Barabasi.png")
 ba = ba %>% image_quantize(colorspace = 'gray')
 ba = rasterGrob(ba,height=1)
 
-g1 = ggarrange(rr,sw,er,ba, nrow=1, labels=c("random regular", "small world", "Erdos-Renyi","Barabasi-Albert"))
-
-ggsave(file="../output/Fig_S1_networkviz.png",width=16,height=4,scale=2.1,units="cm")
+g1 = ggarrange(rr,sw,er,ba, nrow=2, ncol=2, labels=c("random regular", "small world", "Erdos-Renyi","Barabasi-Albert"))
+g1
+ggsave(file="../output/Fig_S1_networkviz.png",width=16,height=16,scale=2.1,units="cm")
