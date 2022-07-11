@@ -51,6 +51,11 @@ p1 = ggplot(df_combined,aes(x=condition,y=delta_aicc, fill=facet))+
   scale_fill_viridis_d(begin=0.5)+
   labs(x="Acquisition mechanism",y="Support for social transmission (delta AICC)", fill="Data type")+
   theme_classic()
++
+  theme(axis.text=element_text(size=rel(2)),
+        axis.title=element_text(size=rel(2)),
+        legend.text=element_text(size=rel(1.5)),
+        legend.title=element_text(size=rel(1.5)))
 
 p1
 
@@ -152,7 +157,7 @@ legend = plot_grid(legend1,legend2, ncol = 2, nrow=1)
 
 plot_grid(p_graphs, legend, rel_heights = c(3, .4), ncol=1,nrow=2)
 
-ggsave("../output/Fig_S_NBDA_support.png", width=15,height=6,scale=2,units="cm")
+ggsave("../output/Fig_S_NBDA_support.png", width=15,height=7,scale=2,units="cm")
 
 
 df_plot %>% group_by(label,measure) %>% summarize(n(), mean = mean(value), Q2=PI(value)[1], Q3=PI(value)[2])
