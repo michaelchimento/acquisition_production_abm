@@ -2,8 +2,10 @@
 
 Code and data to reproduce the analysis and figures from the manuscript by *Michael Chimento, Brendan J. Barrett, Anne Kandler and Lucy M. Aplin*.
 
+[![DOI](https://zenodo.org/badge/285799633.svg)](https://zenodo.org/badge/latestdoi/285799633)
+
 ## Abstract
-> Culture is an outcome of the acquisition of knowledge about behaviour through social transmission, and its subsequent production. Transmission and production are often discussed interchangeably or modeled separately, yet to date, no study has accounted for both processes and explored their interaction. We present a generative model that integrates the two in order to explore how variation in either might shape cultural diffusion dynamics. Agents make behavioural choices that change as they learn from their behavioural productions. Their repertoires also change over time, and the social transmission of behaviours depends on their frequency. We diffuse a novel behaviour through social networks across a large parameter space to demonstrate how accounting for both transmission and production reveals dependencies between individual-level behavioural production rules and population-level diffusion dynamics. We then investigate how such dependencies might affect the performance of two commonly used inferential models for social learning; Network-based Diffusion Analysis (NBDA), and Experienced Weighted Attraction models (EWA). By clarifying the distinction between acquisition and usage, we illuminate often-overlooked theoretical differences between social learning and social influence. These distinctions yield consequences and new considerations for how inferential methods are applied to empirical studies of culture.
+> Culture is an outcome of both the acquisition of knowledge about behaviour through social transmission, and its subsequent production by individuals. Acquisition and production are often discussed interchangeably or modeled separately, yet to date, no study has accounted for both processes and explored their interaction. We present a generative model that integrates the two to explore how variation in production rules might shape cultural diffusion dynamics. Agents make behavioural choices that change as they learn from their productions. Their repertoires also change over time, and the social transmission of behaviours depends on their frequency. We diffuse a novel behaviour through social networks across a large parameter space to demonstrate how individual-level behavioural production rules influence population-level diffusion dynamics. We then investigate how linking transmission and production might affect the performance of two commonly used inferential models for social learning; Network-based Diffusion Analysis, and Experienced Weighted Attraction models. Clarifying the distinction between acquisition and production yields predictions for how production influences diffusion that are generalisable across species, and has consequences for how inferential methods are applied to empirical data. Our model illuminates the differences between social learning and social influence, demonstrates the overlooked role of reinforcement learning in cultural diffusions, and allows for clearer discussions about social learning strategies.
 
 
 ## Contents
@@ -32,8 +34,3 @@ All analyses were performed using R v. 4.0.2 and Stan v. 2.27 using the followin
 - Rstan v. 2.21.2
 - sna v. 2.6
 - tidyverse v. 1.3.0
-
-<<<<<<< HEAD
-
-=======
->>>>>>> b944fcb3f6c618e765d910dfac3206ee0920940e
