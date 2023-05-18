@@ -14,9 +14,8 @@ File  | Description
 ```EWA_recoverable_homoegeneous.py``` | agents begin with knowledge of both behaviours generating idealized data for EWA
 ```generative_model.py``` | the main generative model used for most results presented in the manuscript
 ```paramlist_GENERATIVE_equiv_payoffs.py``` | defines parameter constellations for main results
-```paramlist_GENERATIVE_equiv_payoffs.py``` | defines parameter constellations for the extended exploration of phi in which agents already had full information about the established behaviour
-```paramlist_GENERATIVE_fullweights.py``` | defines parameter constellations for main results
-```paramlist_NBDA_asocial_binary.py``` | The novel behaviour spreads through asocial learning
-```paramlist_NBDA_asocial_proportional.py``` | The novel behaviour spreads through asocial learning
-```paramlist_NBDA_social_binary.py``` | The novel behaviour spreads through social transmission, but behavioural frequencies do not influence transmission probabilities, generating idealized data for NBDA
-```paramlist_NBDA_social_proportional.py``` | The novel behaviour spreads through social transmission, and behavioural frequencies do influence transmission probabilities
+```paramlist_GENERATIVE_fullweights.py``` | defines parameter constellations for the extended exploration of phi in which agents already had full information about the established behaviour
+```paramlist_NBDA_ideal_asocial.py``` | The novel behaviour spreads through asocial learning
+```paramlist_NBDA_realistic_asocial.py``` | The novel behaviour spreads through asocial learning
+```paramlist_NBDA_ideal_social.py``` | The novel behaviour spreads through social transmission, but behavioural frequencies do not influence transmission probabilities, generating idealized data for NBDA
+```paramlist_NBDA_realistic_social.py``` | The novel behaviour spreads through social transmission, and behavioural frequencies do influence transmission probabilities
